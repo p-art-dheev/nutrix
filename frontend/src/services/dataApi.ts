@@ -1,5 +1,5 @@
 import type { DatasetRowsResponse, PantryResponse } from '../types/dataset';
-import type { HighProteinInput, HighProteinResult } from '../types/optimization';
+import type { HighProteinInput, HighProteinResult, DeficiencyCoverageInput, DeficiencyCoverageResult } from '../types/optimization';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -67,4 +67,27 @@ export const runHighProteinOptimization = async (
 export const clearPantry = async (): Promise<void> => {
   const response = await fetch(`${API_BASE}/api/pantry`, { method: 'DELETE' });
   await handleResponse(response);
+};
+
+// ============================================================
+// Problem 2 — Deficiency-Aware Food Selection
+// ============================================================
+
+/** Fetch the list of numeric nutrient columns available in the loaded dataset. */
+export const fetchNutrientColumns = async (): Promise<string[]> => {
+  const response = await fetch(`${API_BASE}/api/optimization/nutrients`);
+  const data = await handleResponse<{ nutrients: string[] }>(response);
+  return data.nutrients;
+};
+
+/** Run the Deficiency-Aware Food Selection MILP (Problem 2). */
+export const runDeficiencyCoverageOptimization = async (
+  input: DeficiencyCoverageInput,
+): Promise<DeficiencyCoverageResult> => {
+  const response = await fetch(`${API_BASE}/api/optimization/deficiency-coverage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  return handleResponse<DeficiencyCoverageResult>(response);
 };
