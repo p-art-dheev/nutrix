@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { UploadData } from '../types/app';
+import { uploadDataset } from '../services/dataApi';
 import './FileUpload.css';
 
 interface FileUploadProps {
@@ -38,23 +39,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue, onU
     
     setProgressMsg('Processing...');
     
-    const formData = new FormData();
-    csvFiles.forEach(file => {
-      formData.append('files', file);
-    });
-
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/data/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || 'Upload failed');
-      }
-
-      const data = await response.json();
+      const data = await uploadDataset(csvFiles);
       
       // Simulate slight delay before ready for smooth UX
       await new Promise(resolve => setTimeout(resolve, 600));

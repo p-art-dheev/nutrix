@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, analysis, data, pantry, optimization
+from app.routers import upload, analysis, data, optimization
 
-app = FastAPI(title="Nutrition Based Meal Optimization API")
+app = FastAPI(title="Nutrix API")
 
 # Configure CORS so the React frontend can communicate with the API
 app.add_middleware(
@@ -14,6 +14,7 @@ app.add_middleware(
 )
 
 @app.get("/")
+@app.get("/api/health")
 def read_root():
     return {"message": "Backend is running"}
 
@@ -21,5 +22,4 @@ def read_root():
 app.include_router(upload.router)
 app.include_router(analysis.router)
 app.include_router(data.router)
-app.include_router(pantry.router)
 app.include_router(optimization.router)

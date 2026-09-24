@@ -79,6 +79,8 @@ npm run dev
 ```
 *The frontend will now be running on `http://localhost:5173`. Open this URL in your browser to use the application!*
 
+The Vite dev server forwards every `/api/...` request to the backend on port 8000, so both must be running.
+
 ---
 
 ## Usage
@@ -87,3 +89,21 @@ npm run dev
 3. Upload your CSV files containing the food and nutrition data.
 4. The backend will validate, process, and merge the datasets using Pandas.
 5. Review the dataset statistics in the UI and proceed to optimization.
+
+---
+
+## Deployment (Vercel)
+
+The whole app deploys as one Vercel project:
+
+* The **frontend** is built from `frontend/` and served as static files.
+* The **backend** runs as a Python function: `api/index.py` loads the FastAPI app from `backend/`, and `vercel.json` sends every `/api/*` request to it.
+* Uploaded datasets are stored in a private **Vercel Blob** store, because each request may reach a different server. The browser keeps the dataset ID and pantry and sends them with every request. Locally, datasets are saved in `backend/.datasets/` instead.
+
+Setup (one time):
+1. Import the GitHub repo in Vercel (Framework: Vite; the settings come from `vercel.json`).
+2. In the project's **Storage** tab, create a **Blob** store with **private** access and connect it to the project (this adds `BLOB_READ_WRITE_TOKEN`).
+3. Redeploy. After that, every push to `main` deploys automatically.
+
+Limits: uploads must be under 4.5 MB per request (Vercel's request size limit).
+

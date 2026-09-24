@@ -1,26 +1,21 @@
-from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
-import app.state as state
+import pandas as pd
+from fastapi import APIRouter, Depends, Query
+
 from app.data_utils import get_food_column, row_to_dict
+from app.storage import current_dataset
 
 router = APIRouter()
-
-
-def _require_dataset():
-    if state.global_df is None:
-        raise HTTPException(status_code=400, detail="No dataset loaded. Please upload a dataset first.")
-    return state.global_df
 
 
 @router.get("/api/data/rows")
 def get_rows(
     offset: int = Query(0, ge=0),
     limit: int = Query(0, ge=0),
+    df: pd.DataFrame = Depends(current_dataset),
 ):
     """
     Return dataset rows with all columns. limit=0 returns all rows from offset.
     """
-    df = _require_dataset()
     food_column = get_food_column(df)
     columns = [str(col) for col in df.columns]
     total = len(df)
@@ -37,7 +32,6 @@ def get_rows(
         rows.append(
             {
                 "id": row_id,
-                "in_pantry": row_id in state.pantry_ids,
                 "values": row_data,
             }
         )

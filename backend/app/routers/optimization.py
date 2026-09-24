@@ -2,7 +2,7 @@
 HTTP layer for the optimization methods.
 
 The router only does three things:
-    1. read the request and the user's column mapping
+    1. read the request: dataset (?datasetId=), column mapping, pantry row IDs
     2. turn dataset rows into a food list (common.load_foods)
     3. call the solver and add dataset info to its result
 All optimization logic lives in app/solvers/.
@@ -10,13 +10,14 @@ All optimization logic lives in app/solvers/.
 
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+import pandas as pd
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-import app.state as state
 from app.solvers.common import COLUMN_HINTS, load_foods, numeric_columns, resolve_columns, suggest_column
 from app.solvers.deficiency_coverage import solve_deficiency_coverage
 from app.solvers.high_protein import solve_high_protein
+from app.storage import current_dataset
 
 router = APIRouter()
 
@@ -25,17 +26,10 @@ router = APIRouter()
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-def _require_dataset():
-    if state.global_df is None:
-        raise HTTPException(status_code=400, detail="No dataset loaded. Please upload a dataset first.")
-    return state.global_df
-
-
-def _run(solver, column_mapping: dict[str, Optional[str]], **params) -> dict:
+def _run(solver, df: pd.DataFrame, pantry_ids: list[int], column_mapping: dict[str, Optional[str]], **params) -> dict:
     """Load foods for the mapped columns, run `solver`, and attach dataset info."""
-    df = _require_dataset()
-    use_pantry = bool(state.pantry_ids)
-    row_ids = sorted(state.pantry_ids) if use_pantry else range(len(df))
+    use_pantry = bool(pantry_ids)
+    row_ids = sorted(set(pantry_ids)) if use_pantry else range(len(df))
 
     try:
         columns = resolve_columns(df, column_mapping)
@@ -56,9 +50,8 @@ def _run(solver, column_mapping: dict[str, Optional[str]], **params) -> dict:
 # ---------------------------------------------------------------------------
 
 @router.get("/api/optimization/columns")
-def get_columns():
+def get_columns(df: pd.DataFrame = Depends(current_dataset)):
     """Numeric columns the user can map, plus our best guess for each role."""
-    df = _require_dataset()
     return {
         "numeric_columns": numeric_columns(df),
         "suggested": {role: suggest_column(df, role) for role in COLUMN_HINTS},
@@ -78,14 +71,18 @@ class HighProteinRequest(BaseModel):
     calories_column: Optional[str] = Field(None, alias="caloriesColumn")
     fat_column: Optional[str] = Field(None, alias="fatColumn")
     protein_column: Optional[str] = Field(None, alias="proteinColumn")
+    # Pantry: rows to optimize over (empty → whole dataset)
+    row_ids: list[int] = Field(default_factory=list, alias="rowIds")
 
     model_config = {"populate_by_name": True}
 
 
 @router.post("/api/optimization/high-protein")
-def run_high_protein(body: HighProteinRequest):
+def run_high_protein(body: HighProteinRequest, df: pd.DataFrame = Depends(current_dataset)):
     return _run(
         solve_high_protein,
+        df,
+        body.row_ids,
         column_mapping={
             "calories": body.calories_column,
             "fat": body.fat_column,
@@ -110,14 +107,17 @@ class DeficiencyCoverageRequest(BaseModel):
     variety_max: int = Field(..., ge=1, alias="varietyMax")              # Vmax
     min_portion: float = Field(10, ge=0, alias="minPortion")             # q_min (grams)
     calories_column: Optional[str] = Field(None, alias="caloriesColumn")
+    row_ids: list[int] = Field(default_factory=list, alias="rowIds")                 # pantry
 
     model_config = {"populate_by_name": True}
 
 
 @router.post("/api/optimization/deficiency-coverage")
-def run_deficiency_coverage(body: DeficiencyCoverageRequest):
+def run_deficiency_coverage(body: DeficiencyCoverageRequest, df: pd.DataFrame = Depends(current_dataset)):
     result = _run(
         solve_deficiency_coverage,
+        df,
+        body.row_ids,
         column_mapping={"calories": body.calories_column, "nutrient": body.nutrient},
         required_dosage=body.required_dosage,
         calorie_max=body.calorie_max,

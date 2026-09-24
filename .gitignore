@@ -34,3 +34,9 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+
+# Local datasets saved by the backend during development
+backend/.datasets/
+
+# Vercel
+.vercel

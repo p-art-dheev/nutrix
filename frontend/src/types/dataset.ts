@@ -18,8 +18,3 @@ export interface PantryItem {
   food: string | null;
 }
 
-export interface PantryResponse {
-  food_column: string;
-  count: number;
-  items: PantryItem[];
-}

@@ -5,7 +5,7 @@ import { FeaturesSection } from './components/FeaturesSection';
 import { Analysis } from './components/Analysis';
 import { DataPage } from './components/DataPage';
 import { Optimize } from './components/Optimize';
-import { clearPantry } from './services/dataApi';
+import { setDatasetId } from './services/session';
 import type { AppView, UploadData } from './types/app';
 
 function App() {
@@ -21,7 +21,7 @@ function App() {
   };
 
   const handleResetUpload = () => {
-    clearPantry().catch(() => undefined);
+    setDatasetId(null); // also empties the pantry
     setUploadData(null);
   };
 

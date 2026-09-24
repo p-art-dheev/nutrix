@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Analysis.css'; // Reusing some base styles
 import './DistributionAnalysis.css';
+import { apiUrl } from '../services/dataApi';
 
 interface DistributionData {
   range: string;
@@ -25,7 +26,7 @@ export const DistributionAnalysis: React.FC = () => {
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetch('http://127.0.0.1:8000/api/data/columns')
+    fetch(apiUrl('/api/data/columns'))
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch columns');
         return res.json();
@@ -50,7 +51,7 @@ export const DistributionAnalysis: React.FC = () => {
     setStats(null);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/data/distribution/${encodeURIComponent(selectedColumn)}?bins=${selectedBins}`);
+      const response = await fetch(apiUrl(`/api/data/distribution/${encodeURIComponent(selectedColumn)}`, { bins: selectedBins }));
       if (!response.ok) {
         throw new Error('Failed to fetch distribution data');
       }

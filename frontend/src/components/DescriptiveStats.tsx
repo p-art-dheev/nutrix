@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Analysis.css';
+import { apiUrl } from '../services/dataApi';
 
 interface Stats {
   count: number;
@@ -21,7 +22,7 @@ export const DescriptiveStats: React.FC = () => {
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetch('http://127.0.0.1:8000/api/data/columns')
+    fetch(apiUrl('/api/data/columns'))
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch columns');
         return res.json();
@@ -45,7 +46,7 @@ export const DescriptiveStats: React.FC = () => {
     setStats(null);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/data/stats/${encodeURIComponent(selectedColumn)}`);
+      const response = await fetch(apiUrl(`/api/data/stats/${encodeURIComponent(selectedColumn)}`));
       if (!response.ok) {
         throw new Error('Failed to fetch statistics');
       }
