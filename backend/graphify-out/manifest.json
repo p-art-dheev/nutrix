@@ -1,0 +1,72 @@
+{
+  "app/__init__.py": {
+    "mtime": 1786652070.8713744,
+    "ast_hash": "ab72a60f23f851521ce5c225f3345697",
+    "semantic_hash": "ab72a60f23f851521ce5c225f3345697"
+  },
+  "app/data_utils.py": {
+    "mtime": 1787586227.8225298,
+    "ast_hash": "a95bf4d80b215acef1563f8a19339ef6",
+    "semantic_hash": "a95bf4d80b215acef1563f8a19339ef6"
+  },
+  "app/main.py": {
+    "mtime": 1787767799.253327,
+    "ast_hash": "12205f7223a5b053b3e0c60785538571",
+    "semantic_hash": "12205f7223a5b053b3e0c60785538571"
+  },
+  "app/routers/analysis.py": {
+    "mtime": 1786704029.6378415,
+    "ast_hash": "daf0caa8e444bd5bcef2988b9f0475b5",
+    "semantic_hash": "daf0caa8e444bd5bcef2988b9f0475b5"
+  },
+  "app/routers/data.py": {
+    "mtime": 1787586313.2332504,
+    "ast_hash": "8e60c4f51831b6b4e31ab3c30667f618",
+    "semantic_hash": "8e60c4f51831b6b4e31ab3c30667f618"
+  },
+  "app/routers/optimization.py": {
+    "mtime": 1789531164.3179,
+    "ast_hash": "349266eb129a4c82db6c8dd5f2a55c67",
+    "semantic_hash": "349266eb129a4c82db6c8dd5f2a55c67"
+  },
+  "app/routers/pantry.py": {
+    "mtime": 1787681870.0255845,
+    "ast_hash": "ff9343e4da059885002954e9acb0f847",
+    "semantic_hash": "ff9343e4da059885002954e9acb0f847"
+  },
+  "app/routers/upload.py": {
+    "mtime": 1787586238.0796008,
+    "ast_hash": "f6d193dc45a13bb8b82d5b9ca9061a7c",
+    "semantic_hash": "f6d193dc45a13bb8b82d5b9ca9061a7c"
+  },
+  "app/solvers/__init__.py": {
+    "mtime": 1787767797.268305,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "app/solvers/deficiency_coverage.py": {
+    "mtime": 1789531674.2893112,
+    "ast_hash": "530f448dd99d03cfa56c197595413149",
+    "semantic_hash": "530f448dd99d03cfa56c197595413149"
+  },
+  "app/solvers/high_protein.py": {
+    "mtime": 1787767838.8485005,
+    "ast_hash": "323c4020577a59f4593d1f37bf7522d0",
+    "semantic_hash": "323c4020577a59f4593d1f37bf7522d0"
+  },
+  "app/state.py": {
+    "mtime": 1787586225.8077624,
+    "ast_hash": "a5d9771cfe851f00b7ceb7cf7eee15d4",
+    "semantic_hash": "a5d9771cfe851f00b7ceb7cf7eee15d4"
+  },
+  "debug_milp.py": {
+    "mtime": 1789531632.981664,
+    "ast_hash": "4c5cc1d2bc63f62a7da002c03593e455",
+    "semantic_hash": "4c5cc1d2bc63f62a7da002c03593e455"
+  },
+  "test_deficiency_coverage.py": {
+    "mtime": 1789531749.2116692,
+    "ast_hash": "da25484056bd60dd8deb8970c9e60cc8",
+    "semantic_hash": "da25484056bd60dd8deb8970c9e60cc8"
+  }
+}

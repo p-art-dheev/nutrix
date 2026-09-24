@@ -1,6 +1,6 @@
-# Nutrition-Based Meal Optimization
+# Nutrix
 
-A modern, intelligent web application designed to analyze nutritional datasets and build optimal meal plans using Operations Research. 
+**Nutrition-Based Meal Optimization** — a modern, intelligent web application designed to analyze nutritional datasets and build optimal meal plans using Operations Research. 
 
 The application evaluates food items, nutritional attributes, and costs to find meal combinations that satisfy strict nutritional requirements (e.g., Calories, Protein, Fiber) while respecting practical constraints.
 
@@ -13,6 +13,12 @@ The interface is built with a clean, minimalist "Linear × Notion" design aesthe
 ---
 
 ## Getting Started
+
+Clone the repository:
+```bash
+git clone https://github.com/p-art-dheev/nutrix.git
+cd nutrix
+```
 
 This is a monorepo containing both the frontend and backend. You will need two terminal windows to run both servers simultaneously.
 

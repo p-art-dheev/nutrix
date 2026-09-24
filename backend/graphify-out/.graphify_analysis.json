@@ -1,0 +1,246 @@
+{
+  "communities": {
+    "0": [
+      "app_routers_optimization",
+      "app_routers_optimization_deficiencycoveragerequest",
+      "app_routers_optimization_highproteinrequest",
+      "app_routers_optimization_py_basemodel",
+      "app_routers_optimization_py_post",
+      "app_routers_optimization_rationale_66",
+      "app_routers_optimization_rationale_89",
+      "app_routers_optimization_run_deficiency_coverage",
+      "app_routers_optimization_run_high_protein",
+      "app_solvers_high_protein",
+      "app_solvers_high_protein_find_column",
+      "app_solvers_high_protein_numeric",
+      "app_solvers_high_protein_py_any",
+      "app_solvers_high_protein_py_dataframe",
+      "app_solvers_high_protein_solve_high_protein"
+    ],
+    "1": [
+      "app_data_utils",
+      "app_data_utils_get_food_column",
+      "app_data_utils_get_food_name",
+      "app_data_utils_py_any",
+      "app_data_utils_py_dataframe",
+      "app_data_utils_row_to_dict",
+      "app_data_utils_serialize_value",
+      "app_routers_data",
+      "app_routers_data_get_rows",
+      "app_routers_data_py_get",
+      "app_routers_data_rationale_20",
+      "app_routers_data_require_dataset",
+      "app_routers_pantry_get_pantry",
+      "app_routers_pantry_py_get"
+    ],
+    "2": [
+      "app_solvers_deficiency_coverage",
+      "app_solvers_deficiency_coverage_find_column",
+      "app_solvers_deficiency_coverage_get_available_nutrient_columns",
+      "app_solvers_deficiency_coverage_numeric",
+      "app_solvers_deficiency_coverage_py_any",
+      "app_solvers_deficiency_coverage_py_dataframe",
+      "app_solvers_deficiency_coverage_rationale_1",
+      "app_solvers_deficiency_coverage_rationale_100",
+      "app_solvers_deficiency_coverage_rationale_49",
+      "app_solvers_deficiency_coverage_rationale_62",
+      "app_solvers_deficiency_coverage_rationale_73",
+      "app_solvers_deficiency_coverage_solve_deficiency_coverage",
+      "test_deficiency_coverage",
+      "test_deficiency_coverage_rationale_1"
+    ],
+    "3": [
+      "app_routers_pantry",
+      "app_routers_pantry_add_bulk_to_pantry",
+      "app_routers_pantry_add_to_pantry",
+      "app_routers_pantry_get_pantry_count",
+      "app_routers_pantry_pantrybulkrequest",
+      "app_routers_pantry_pantryrowrequest",
+      "app_routers_pantry_py_basemodel",
+      "app_routers_pantry_py_post",
+      "app_routers_pantry_remove_from_pantry",
+      "app_routers_pantry_require_dataset",
+      "app_routers_pantry_validate_row_id"
+    ],
+    "4": [
+      "app_routers_pantry_clear_pantry",
+      "app_routers_upload",
+      "app_routers_upload_py_post",
+      "app_routers_upload_rationale_11",
+      "app_routers_upload_upload_data",
+      "app_state",
+      "app_state_reset_pantry",
+      "delete",
+      "uploadfile"
+    ],
+    "5": [
+      "app_routers_analysis",
+      "app_routers_analysis_get_columns",
+      "app_routers_analysis_get_distribution",
+      "app_routers_analysis_get_stats",
+      "app_routers_analysis_py_get",
+      "app_routers_analysis_rationale_11",
+      "app_routers_analysis_rationale_26",
+      "app_routers_analysis_rationale_61"
+    ],
+    "6": [
+      "app_main",
+      "app_main_py_get",
+      "app_main_read_root"
+    ],
+    "7": [
+      "app_routers_optimization_get_nutrient_columns",
+      "app_routers_optimization_py_get",
+      "app_routers_optimization_rationale_52"
+    ],
+    "8": [
+      "debug_milp",
+      "debug_milp_rationale_1"
+    ],
+    "9": [
+      "app_init"
+    ],
+    "10": [
+      "app_solvers_init"
+    ]
+  },
+  "cohesion": {
+    "0": 0.22857142857142856,
+    "1": 0.27472527472527475,
+    "2": 0.2087912087912088,
+    "3": 0.4,
+    "4": 0.25,
+    "5": 0.32142857142857145,
+    "6": 0.6666666666666666,
+    "7": 0.6666666666666666,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0
+  },
+  "gods": [
+    {
+      "id": "app_data_utils_get_food_name",
+      "label": "get_food_name()",
+      "degree": 11
+    },
+    {
+      "id": "app_solvers_deficiency_coverage_solve_deficiency_coverage",
+      "label": "solve_deficiency_coverage()",
+      "degree": 10
+    },
+    {
+      "id": "app_solvers_high_protein_solve_high_protein",
+      "label": "solve_high_protein()",
+      "degree": 8
+    },
+    {
+      "id": "app_data_utils_get_food_column",
+      "label": "get_food_column()",
+      "degree": 7
+    },
+    {
+      "id": "app_data_utils_row_to_dict",
+      "label": "row_to_dict()",
+      "degree": 6
+    },
+    {
+      "id": "app_routers_data_get_rows",
+      "label": "get_rows()",
+      "degree": 6
+    },
+    {
+      "id": "app_routers_pantry_require_dataset",
+      "label": "_require_dataset()",
+      "degree": 6
+    },
+    {
+      "id": "app_routers_pantry_add_to_pantry",
+      "label": "add_to_pantry()",
+      "degree": 6
+    },
+    {
+      "id": "app_routers_optimization_run_deficiency_coverage",
+      "label": "run_deficiency_coverage()",
+      "degree": 5
+    },
+    {
+      "id": "app_routers_pantry_get_pantry",
+      "label": "get_pantry()",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "add_to_pantry()",
+      "target": "get_food_name()",
+      "source_files": [
+        "app/routers/pantry.py",
+        "app/data_utils.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "solve_deficiency_coverage()",
+      "target": "get_food_name()",
+      "source_files": [
+        "app/solvers/deficiency_coverage.py",
+        "app/data_utils.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "solve_high_protein()",
+      "target": "get_food_name()",
+      "source_files": [
+        "app/solvers/high_protein.py",
+        "app/data_utils.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "get_nutrient_columns()",
+      "target": "get_available_nutrient_columns()",
+      "source_files": [
+        "app/routers/optimization.py",
+        "app/solvers/deficiency_coverage.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "run_deficiency_coverage()",
+      "target": "solve_deficiency_coverage()",
+      "source_files": [
+        "app/routers/optimization.py",
+        "app/solvers/deficiency_coverage.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `get_food_name()` connect `Community 1` to `Community 0`, `Community 2`, `Community 3`?",
+      "why": "High betweenness centrality (0.172) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `solve_deficiency_coverage()` connect `Community 2` to `Community 0`, `Community 1`?",
+      "why": "High betweenness centrality (0.130) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `solve_high_protein()` connect `Community 0` to `Community 1`?",
+      "why": "High betweenness centrality (0.075) - this node is a cross-community bridge."
+    }
+  ]
+}

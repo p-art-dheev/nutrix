@@ -1,293 +1,102 @@
 """
-Deficiency-Aware Food Selection — Mixed-Integer Linear Programming (MILP)
-=========================================================================
-Optimization Problem 2
+Problem 2 — Deficiency-Aware Food Selection (Mixed-Integer Linear Programming)
 
-Mathematical Formulation (from slides)
---------------------------------------
-Decision Variables
-  xᵢ ∈ {0, 1}        — binary: 1 if food i is selected, 0 otherwise
-  qᵢ ≥ 0             — quantity of food i (grams)
-  yⱼ ∈ [0, 1]        — fraction of deficiency j covered
+Decision variables
+    xᵢ ∈ {0, 1}   1 if food i is selected
+    qᵢ ≥ 0        grams of food i
+    y  ∈ [0, 1]   fraction of the deficiency covered
 
-Objective
-  max Z = yⱼ
+    max  Z = y
+    s.t. Σ (Cᵢ/100)·qᵢ ≤ Cmax                  1. calorie capacity
+         y·D ≤ Σ (Nᵢ/100)·qᵢ                   2. deficiency coverage
+                                                  (slide: y ≤ Σ(Nᵢ/100)·qᵢ / D, both sides × D)
+         Vmin ≤ Σ xᵢ ≤ Vmax                    3. food variety
+         qᵢ ≤ Mᵢ·xᵢ,  Mᵢ = 100·Cmax / Cᵢ       4. quantity–selection linking (big-M)
+         qᵢ ≥ q_min·xᵢ                         5. minimum portion  (added to the slide model:
+                                                  a food counted in Vmin must actually be eaten)
+         xᵢ ∈ {0,1},  qᵢ ≥ 0,  0 ≤ y ≤ 1       6. variable restrictions
 
-Subject to
-  1. Calorie capacity :  Σ (Cᵢ / 100) · qᵢ  ≤  Cmax
-  2. Deficiency coverage :  yⱼ  ≤  Σ (Nᵢⱼ / 100) · qᵢ  /  D
-     → rearranged for linearity:  yⱼ · D  ≤  Σ (Nᵢⱼ / 100) · qᵢ
-  3. Minimum food variety :  Σ xᵢ  ≥  Vmin
-  4. Maximum food variety :  Σ xᵢ  ≤  Vmax
-  5. Quantity–selection linking :  qᵢ  ≤  Mᵢ · xᵢ   ∀ i
-        where  Mᵢ = 100 · Cmax / Cᵢ   (big-M, max grams before hitting Cmax)
-        fallback when Cᵢ = 0 :  Mᵢ = 100 · Cmax  (effectively unconstrained)
-  6. Variable restrictions :  xᵢ ∈ {0,1},  qᵢ ≥ 0,  0 ≤ yⱼ ≤ 1
+    Cᵢ = calories of food i per 100 g
+    Nᵢ = amount of the deficient nutrient in food i per 100 g
+    D  = required dosage of that nutrient (same unit as the dataset column)
 
-Where
-  Cᵢ     = "Caloric Value" column (kcal per 100 g of food i)
-  Nᵢⱼ    = nutrient j column (units per 100 g of food i)
-  D      = user-supplied required dosage for nutrient j
-  Cmax   = user-supplied maximum calorie capacity
-  Vmin   = minimum number of distinct foods
-  Vmax   = maximum number of distinct foods
+Input foods: [{"id", "name", "calories", "nutrient"}, ...]
 """
 
-from typing import Any, Optional
-
-import pandas as pd
 import pulp
 
-from app.data_utils import get_food_name
+from app.solvers.common import solve, value
 
 
-# ---------------------------------------------------------------------------
-# Internal helpers (shared pattern with high_protein.py)
-# ---------------------------------------------------------------------------
-
-def _find_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> Optional[str]:
-    """Case-insensitive fuzzy column lookup — exact match first, then substring."""
-    lookup = {str(col).strip().lower(): col for col in df.columns}
-    for name in candidates:
-        if name.lower() in lookup:
-            return lookup[name.lower()]
-    for key, original in lookup.items():
-        for name in candidates:
-            if name.lower() in key:
-                return original
-    return None
-
-
-def _numeric(value: Any) -> float:
-    """Coerce a cell value to a non-negative float; NaN / bad values → 0.0."""
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return 0.0
-    if pd.isna(number):
-        return 0.0
-    return max(number, 0.0)
-
-
-def get_available_nutrient_columns(df: pd.DataFrame) -> list[str]:
+def big_m(calories_per_100g: float, calorie_max: float) -> float:
     """
-    Return a sorted list of numeric columns in *df* that could represent
-    nutrient concentrations.  Excludes known non-nutrient numeric columns
-    (row indices, etc.).
+    Mᵢ = most grams of food i that fit in the calorie budget (slide 11).
+    A 0-kcal food is never limited by calories, so we fall back to the grams
+    a 1 kcal/100 g food could reach (100·Cmax) to keep M finite.
     """
-    EXCLUDE = {"unnamed: 0", "id", "index"}
-    cols = []
-    for col in df.select_dtypes(include="number").columns:
-        if col.strip().lower() not in EXCLUDE:
-            cols.append(str(col))
-    return sorted(cols)
+    if calories_per_100g > 0:
+        return 100 * calorie_max / calories_per_100g
+    return 100 * calorie_max
 
-
-# ---------------------------------------------------------------------------
-# Main solver
-# ---------------------------------------------------------------------------
 
 def solve_deficiency_coverage(
-    df: pd.DataFrame,
-    row_ids: list[int],
-    nutrient_col: str,
+    foods: list[dict],
     required_dosage: float,
     calorie_max: float,
     variety_min: int,
     variety_max: int,
-    source: str,
-) -> dict[str, Any]:
-    """
-    Solve the Deficiency-Aware Food Selection MILP.
-
-    Parameters
-    ----------
-    df            : Loaded food dataset (global_df from state).
-    row_ids       : Row indices to include (pantry or full dataset).
-    nutrient_col  : Exact column name for the deficient nutrient (j).
-    required_dosage : D — required amount of nutrient j (same units as dataset).
-    calorie_max   : Cmax — maximum total calories.
-    variety_min   : Vmin — minimum number of distinct foods selected.
-    variety_max   : Vmax — maximum number of distinct foods selected.
-    source        : "pantry" or "dataset" (for UI display only).
-
-    Returns
-    -------
-    dict with keys: status, message, foods, totals, limits, food_count, source.
-    """
-
-    # ------------------------------------------------------------------
-    # 1. Resolve calorie column (Cᵢ)
-    # ------------------------------------------------------------------
-    calorie_col = _find_column(df, ("Caloric Value", "Calories", "Calorie", "Energy", "kcal"))
-    if calorie_col is None:
-        raise ValueError(
-            "Dataset is missing a calorie column (expected 'Caloric Value', 'Calories', etc.)."
-        )
-
-    # ------------------------------------------------------------------
-    # 2. Validate nutrient column (Nᵢⱼ)
-    # ------------------------------------------------------------------
-    if nutrient_col not in df.columns:
-        raise ValueError(
-            f"Nutrient column '{nutrient_col}' not found in the dataset. "
-            f"Available columns: {list(df.columns)}."
-        )
-    if not pd.api.types.is_numeric_dtype(df[nutrient_col]):
-        raise ValueError(
-            f"Column '{nutrient_col}' is not numeric and cannot be used as a nutrient."
-        )
-
-    # ------------------------------------------------------------------
-    # 3. Build food list from selected rows
-    # ------------------------------------------------------------------
-    foods: list[dict[str, Any]] = []
-    for row_id in row_ids:
-        if row_id < 0 or row_id >= len(df):
-            continue
-        row = df.iloc[row_id]
-        calories_per_100g = _numeric(row[calorie_col])
-        nutrient_per_100g = _numeric(row[nutrient_col])
-        foods.append(
-            {
-                "id": row_id,
-                "name": get_food_name(df, row_id) or f"Food {row_id}",
-                "calories": calories_per_100g,   # Cᵢ
-                "nutrient": nutrient_per_100g,   # Nᵢⱼ
-            }
-        )
-
+    min_portion: float,
+) -> dict:
     if not foods:
-        raise ValueError(
-            "No foods available. Upload a dataset or add items to the pantry."
-        )
-
-    n = len(foods)
-
-    # ------------------------------------------------------------------
-    # 4. Validate variety bounds against available foods
-    # ------------------------------------------------------------------
+        raise ValueError("No usable foods to optimize. Check your pantry or dataset.")
     if variety_min > variety_max:
+        raise ValueError(f"Vmin ({variety_min}) must be ≤ Vmax ({variety_max}).")
+    if variety_min > len(foods):
         raise ValueError(
-            f"Vmin ({variety_min}) must be ≤ Vmax ({variety_max})."
+            f"Vmin ({variety_min}) is more than the {len(foods)} available foods. "
+            "Lower Vmin or add foods to the pantry."
         )
-    if variety_min > n:
-        raise ValueError(
-            f"Vmin ({variety_min}) exceeds the number of available foods ({n}). "
-            "Lower Vmin or add more foods to the pantry."
-        )
-    if variety_max < 1:
-        raise ValueError("Vmax must be at least 1.")
-
-    # ------------------------------------------------------------------
-    # 5. Build MILP model
-    # ------------------------------------------------------------------
-    problem = pulp.LpProblem("DeficiencyCoverage", pulp.LpMaximize)
-
-    # Decision variable xᵢ ∈ {0, 1}
-    x = {
-        food["id"]: pulp.LpVariable(f"x_{food['id']}", cat=pulp.LpBinary)
-        for food in foods
-    }
-
-    # Decision variable qᵢ ≥ 0  (grams)
-    q = {
-        food["id"]: pulp.LpVariable(f"q_{food['id']}", lowBound=0, cat=pulp.LpContinuous)
-        for food in foods
-    }
-
-    # Decision variable yⱼ ∈ [0, 1]  (deficiency coverage fraction)
-    y = pulp.LpVariable("y_j", lowBound=0, upBound=1, cat=pulp.LpContinuous)
-
-    # ------------------------------------------------------------------
-    # 6. Objective: max Z = yⱼ
-    # ------------------------------------------------------------------
-    problem += y, "maximize_deficiency_coverage"
-
-    # ------------------------------------------------------------------
-    # 7. Constraint 1 — Calorie capacity: Σ (Cᵢ/100) · qᵢ ≤ Cmax
-    # ------------------------------------------------------------------
-    problem += (
-        pulp.lpSum((food["calories"] / 100.0) * q[food["id"]] for food in foods)
-        <= calorie_max,
-        "calorie_capacity",
-    )
-
-    # ------------------------------------------------------------------
-    # 8. Constraint 2 — Deficiency coverage:
-    #    yⱼ ≤ Σ (Nᵢⱼ/100) · qᵢ / D
-    #    → linearised: yⱼ · D ≤ Σ (Nᵢⱼ/100) · qᵢ
-    # ------------------------------------------------------------------
-    problem += (
-        y * required_dosage
-        <= pulp.lpSum((food["nutrient"] / 100.0) * q[food["id"]] for food in foods),
-        "deficiency_coverage",
-    )
-
-    # ------------------------------------------------------------------
-    # 9. Constraint 3 — Minimum food variety: Σ xᵢ ≥ Vmin
-    # ------------------------------------------------------------------
-    problem += (
-        pulp.lpSum(x[food["id"]] for food in foods) >= variety_min,
-        "min_variety",
-    )
-
-    # ------------------------------------------------------------------
-    # 10. Constraint 4 — Maximum food variety: Σ xᵢ ≤ Vmax
-    # ------------------------------------------------------------------
-    problem += (
-        pulp.lpSum(x[food["id"]] for food in foods) <= variety_max,
-        "max_variety",
-    )
-
-    # ------------------------------------------------------------------
-    # 11. Constraint 5 — Quantity–selection linking: qᵢ ≤ Mᵢ · xᵢ  ∀ i
-    #     Mᵢ = 100 · Cmax / Cᵢ   (max grams of food i before exhausting Cmax)
-    #     Fallback when Cᵢ = 0: Mᵢ = 100 · Cmax (large but finite)
-    # ------------------------------------------------------------------
-    for food in foods:
-        ci = food["calories"]
-        if ci > 0:
-            mi = 100.0 * calorie_max / ci   # Mᵢ from the slide formula
-        else:
-            # Zero-calorie food: quantity is only limited by other constraints;
-            # use a sufficiently large M (total gram budget = 100 × Cmax).
-            mi = 100.0 * calorie_max
-
-        problem += (
-            q[food["id"]] <= mi * x[food["id"]],
-            f"linking_{food['id']}",
-        )
-
-    # ------------------------------------------------------------------
-    # 12. Solve
-    # ------------------------------------------------------------------
-    status_code = problem.solve(pulp.PULP_CBC_CMD(msg=False))
-    status_name = pulp.LpStatus[status_code]
 
     limits = {
         "calorie_max": calorie_max,
         "required_dosage": required_dosage,
         "variety_min": variety_min,
         "variety_max": variety_max,
-        "nutrient": nutrient_col,
+        "min_portion": min_portion,
     }
 
-    # ------------------------------------------------------------------
-    # 13. Handle non-optimal outcomes
-    # ------------------------------------------------------------------
-    if status_name != "Optimal":
-        if status_name == "Infeasible":
-            message = (
-                "No feasible solution exists for these parameters. "
-                "Try: increasing Cmax, lowering Vmin, raising Vmax, or "
-                "relaxing the required dosage D."
-            )
-        else:
-            message = f"The solver returned status: {status_name}."
+    # ---- Model ------------------------------------------------------------
+    model = pulp.LpProblem("DeficiencyCoverage", pulp.LpMaximize)
+    x = {f["id"]: pulp.LpVariable(f"x_{f['id']}", cat=pulp.LpBinary) for f in foods}
+    q = {f["id"]: pulp.LpVariable(f"q_{f['id']}", lowBound=0) for f in foods}
+    y = pulp.LpVariable("y", lowBound=0, upBound=1)
 
+    calories = pulp.lpSum(f["calories"] / 100 * q[f["id"]] for f in foods)
+    nutrient = pulp.lpSum(f["nutrient"] / 100 * q[f["id"]] for f in foods)
+    foods_selected = pulp.lpSum(x.values())
+
+    model += y                                                          # objective
+    model += calories <= calorie_max, "calorie_capacity"                # 1
+    model += y * required_dosage <= nutrient, "deficiency_coverage"     # 2
+    model += foods_selected >= variety_min, "min_variety"               # 3
+    model += foods_selected <= variety_max, "max_variety"               # 3
+    for f in foods:
+        i = f["id"]
+        model += q[i] <= big_m(f["calories"], calorie_max) * x[i], f"link_{i}"   # 4
+        model += q[i] >= min_portion * x[i], f"min_portion_{i}"                  # 5
+
+    status = solve(model)
+
+    # ---- Result -----------------------------------------------------------
+    if status != "Optimal":
+        message = (
+            "No selection satisfies these limits. Try raising Cmax, lowering Vmin, "
+            "raising Vmax or using a smaller minimum portion."
+            if status == "Infeasible"
+            else f"The solver returned status: {status}."
+        )
         return {
-            "status": status_name,
+            "status": status,
             "message": message,
             "foods": [],
             "totals": {
@@ -297,74 +106,41 @@ def solve_deficiency_coverage(
                 "deficiency_coverage_fraction": 0.0,
                 "deficiency_coverage_pct": 0.0,
                 "food_count_selected": 0,
+                "food_count_with_quantity": 0,
             },
             "limits": limits,
-            "food_count": n,
-            "source": source,
         }
 
-    # ------------------------------------------------------------------
-    # 14. Extract solution
-    # ------------------------------------------------------------------
-    y_val = float(pulp.value(y) or 0.0)
-    y_val = max(0.0, min(1.0, y_val))   # clamp numerical noise
-
-    selected = []       # foods with xi=1 AND qi > threshold (non-trivial quantity)
-    x_selected_count = 0  # total foods with xi=1 (binary constraint count)
-    total_calories = 0.0
-    total_nutrient = 0.0
-
-    for food in foods:
-        xi_val = float(pulp.value(x[food["id"]]) or 0.0)
-        qi_val = float(pulp.value(q[food["id"]]) or 0.0)
-
-        # Count all foods with xi=1 (this is what satisfies Vmin constraint)
-        if xi_val >= 0.5:
-            x_selected_count += 1
-
-        # Only report foods that have a meaningful non-zero quantity allocated
-        if xi_val < 0.5 or qi_val < 1e-4:
+    rows = []
+    for f in foods:
+        if value(x[f["id"]]) < 0.5:          # xᵢ = 0 → not selected
             continue
+        grams = value(q[f["id"]])
+        rows.append({
+            "id": f["id"],
+            "food": f["name"],
+            "selected": True,
+            "quantity": round(grams, 2),
+            "calories": round(f["calories"] * grams / 100, 2),
+            "nutrient_obtained": round(f["nutrient"] * grams / 100, 4),
+            "calories_per_100g": f["calories"],
+            "nutrient_per_100g": f["nutrient"],
+        })
+    rows.sort(key=lambda row: row["nutrient_obtained"], reverse=True)
 
-        cal_contrib = (food["calories"] / 100.0) * qi_val
-        nut_contrib = (food["nutrient"] / 100.0) * qi_val
-        total_calories += cal_contrib
-        total_nutrient += nut_contrib
-
-        selected.append(
-            {
-                "id": food["id"],
-                "food": food["name"],
-                "selected": True,           # xᵢ = 1
-                "quantity": round(qi_val, 2),          # qᵢ (grams)
-                "calories": round(cal_contrib, 2),
-                "nutrient_obtained": round(nut_contrib, 4),
-                "calories_per_100g": food["calories"],
-                "nutrient_per_100g": food["nutrient"],
-            }
-        )
-
-    # Sort by nutrient contribution descending
-    selected.sort(key=lambda item: item["nutrient_obtained"], reverse=True)
-
-    nutrient_obtained = (y_val * required_dosage)   # == total_nutrient (within solver tolerance)
-
+    coverage = min(max(value(y), 0.0), 1.0)  # clamp tiny solver noise
     return {
         "status": "Optimal",
         "message": "Optimal deficiency-coverage plan found.",
-        "foods": selected,
+        "foods": rows,
         "totals": {
-            "calories": round(total_calories, 2),
-            "nutrient_obtained": round(total_nutrient, 4),
+            "calories": round(value(calories), 2),
+            "nutrient_obtained": round(value(nutrient), 4),
             "required_dosage": required_dosage,
-            "deficiency_coverage_fraction": round(y_val, 6),
-            "deficiency_coverage_pct": round(y_val * 100.0, 2),
-            # x_selected: foods with xi=1 (satisfies variety constraint)
-            # foods_with_quantity: foods with xi=1 AND qi>0 (non-zero allocation)
-            "food_count_selected": x_selected_count,
-            "food_count_with_quantity": len(selected),
+            "deficiency_coverage_fraction": round(coverage, 6),
+            "deficiency_coverage_pct": round(coverage * 100, 2),
+            "food_count_selected": len(rows),
+            "food_count_with_quantity": sum(1 for row in rows if row["quantity"] > 0),
         },
         "limits": limits,
-        "food_count": n,
-        "source": source,
     }

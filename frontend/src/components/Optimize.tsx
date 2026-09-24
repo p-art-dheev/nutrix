@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { OptimizationProblem } from '../types/app';
 import type {
-  HighProteinInput,
+  HighProteinLimits,
   HighProteinResult,
+  OptimizationColumns,
   DeficiencyCoverageInput,
   DeficiencyCoverageResult,
 } from '../types/optimization';
 import {
   runHighProteinOptimization,
-  fetchNutrientColumns,
+  fetchOptimizationColumns,
   runDeficiencyCoverageOptimization,
 } from '../services/dataApi';
 import './Optimize.css';
@@ -45,6 +46,7 @@ const PROBLEMS: ProblemOption[] = [
       'yⱼ · D ≤ Σ (Nᵢⱼ / 100) · qᵢ',
       'Vmin ≤ Σ xᵢ ≤ Vmax',
       'qᵢ ≤ Mᵢ · xᵢ  (big-M linking)',
+      'qᵢ ≥ q_min · xᵢ  (minimum portion)',
       'xᵢ ∈ {0,1},  qᵢ ≥ 0,  0 ≤ yⱼ ≤ 1',
     ],
   },
@@ -54,7 +56,7 @@ const PROBLEMS: ProblemOption[] = [
 // Problem 1 — High-Protein form config
 // ─────────────────────────────────────────────
 
-const EMPTY_HIGH_PROTEIN: Record<keyof HighProteinInput, string> = {
+const EMPTY_HIGH_PROTEIN: Record<keyof HighProteinLimits, string> = {
   calorieMax: '',
   fatMax: '',
   proteinMin: '',
@@ -62,7 +64,7 @@ const EMPTY_HIGH_PROTEIN: Record<keyof HighProteinInput, string> = {
 };
 
 const HIGH_PROTEIN_FIELDS: {
-  key: keyof HighProteinInput;
+  key: keyof HighProteinLimits;
   label: string;
   symbol: string;
   unit: string;
@@ -77,13 +79,44 @@ const HIGH_PROTEIN_FIELDS: {
 // Problem 2 — Deficiency Coverage form config
 // ─────────────────────────────────────────────
 
-const EMPTY_DEFICIENCY: Omit<DeficiencyCoverageInput, 'nutrient'> & { nutrient: string } = {
+const EMPTY_DEFICIENCY: Omit<DeficiencyCoverageInput, 'caloriesColumn'> = {
   nutrient: '',
   requiredDosage: 0,
   calorieMax: 0,
   varietyMin: 2,
   varietyMax: 10,
+  minPortion: 10,
 };
+
+// Which dataset column holds each value the models need
+type ColumnMapping = { calories: string; fat: string; protein: string };
+const EMPTY_MAPPING: ColumnMapping = { calories: '', fat: '', protein: '' };
+
+// ─────────────────────────────────────────────
+// Helper: column dropdown
+// ─────────────────────────────────────────────
+
+const ColumnSelect: React.FC<{
+  label: string;
+  value: string;
+  columns: string[];
+  onChange: (value: string) => void;
+}> = ({ label, value, columns, onChange }) => (
+  <label className="opt-field">
+    <span className="opt-field-label">{label} column</span>
+    <select className="opt-select" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Select a column…</option>
+      {columns.map((col) => (
+        <option key={col} value={col}>
+          {col}
+        </option>
+      ))}
+    </select>
+  </label>
+);
+
+const skippedNote = (count: number) =>
+  count > 0 ? ` ${count} row${count === 1 ? ' was' : 's were'} skipped because of missing or invalid values.` : '';
 
 // ─────────────────────────────────────────────
 // Helper: Coverage bar
@@ -131,8 +164,12 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
   // Problem 2 state
   const [dcForm, setDcForm] = useState(EMPTY_DEFICIENCY);
   const [dcResult, setDcResult] = useState<DeficiencyCoverageResult | null>(null);
-  const [availableNutrients, setAvailableNutrients] = useState<string[]>([]);
-  const [nutrientsLoading, setNutrientsLoading] = useState(false);
+
+  // Column mapping (shared by both problems)
+  const [columns, setColumns] = useState<OptimizationColumns | null>(null);
+  const [columnsLoading, setColumnsLoading] = useState(false);
+  const [mapping, setMapping] = useState<ColumnMapping>(EMPTY_MAPPING);
+  const numericColumns = columns?.numeric_columns ?? [];
 
   // Shared UI state
   const [formError, setFormError] = useState<string | null>(null);
@@ -140,38 +177,49 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
 
   const activeProblem = PROBLEMS.find((p) => p.id === selectedProblem);
 
-  // ── Fetch nutrient columns when problem 2 is selected ──
-  useEffect(() => {
-    if (selectedProblem === 'nutrient-deficiency' && hasData && availableNutrients.length === 0) {
-      setNutrientsLoading(true);
-      fetchNutrientColumns()
-        .then((cols) => {
-          setAvailableNutrients(cols);
-          if (cols.length > 0 && !dcForm.nutrient) {
-            setDcForm((prev) => ({ ...prev, nutrient: cols[0] }));
-          }
-        })
-        .catch(() => setFormError('Could not load nutrient columns from the dataset.'))
-        .finally(() => setNutrientsLoading(false));
-    }
-  }, [selectedProblem, hasData]);
+  // ── Load dataset columns (and suggested mapping) the first time a problem is picked ──
+  const loadColumns = () => {
+    setColumnsLoading(true);
+    fetchOptimizationColumns()
+      .then((data) => {
+        setColumns(data);
+        setMapping({
+          calories: data.suggested.calories ?? '',
+          fat: data.suggested.fat ?? '',
+          protein: data.suggested.protein ?? '',
+        });
+        setDcForm((prev) => ({ ...prev, nutrient: prev.nutrient || data.numeric_columns[0] || '' }));
+      })
+      .catch(() => setFormError('Could not load columns from the dataset.'))
+      .finally(() => setColumnsLoading(false));
+  };
+
+  const handleMappingChange = (key: keyof ColumnMapping, value: string) => {
+    setMapping((prev) => ({ ...prev, [key]: value }));
+    setFormError(null);
+  };
 
   const handleSelectProblem = (id: OptimizationProblem) => {
     setSelectedProblem(id);
     setFormError(null);
     setHpResult(null);
     setDcResult(null);
+    if (!columns && !columnsLoading) loadColumns();
   };
 
   // ── Problem 1 handlers ──
-  const handleHighProteinChange = (key: keyof HighProteinInput, value: string) => {
+  const handleHighProteinChange = (key: keyof HighProteinLimits, value: string) => {
     setHighProteinForm((prev) => ({ ...prev, [key]: value }));
     setFormError(null);
   };
 
   const handleHighProteinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const values: Partial<HighProteinInput> = {};
+    if (!mapping.calories || !mapping.fat || !mapping.protein) {
+      setFormError('Map the Calories, Fat and Protein columns first.');
+      return;
+    }
+    const values: Partial<HighProteinLimits> = {};
     for (const field of HIGH_PROTEIN_FIELDS) {
       const raw = highProteinForm[field.key].trim();
       const parsed = Number(raw);
@@ -185,7 +233,12 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
     setSolving(true);
     setHpResult(null);
     try {
-      const data = await runHighProteinOptimization(values as HighProteinInput);
+      const data = await runHighProteinOptimization({
+        ...(values as HighProteinLimits),
+        caloriesColumn: mapping.calories,
+        fatColumn: mapping.fat,
+        proteinColumn: mapping.protein,
+      });
       setHpResult(data);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Optimization failed.');
@@ -202,6 +255,10 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
 
   const handleDcSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!mapping.calories) {
+      setFormError('Map the Calories column first.');
+      return;
+    }
     if (!dcForm.nutrient) {
       setFormError('Please select a nutrient.');
       return;
@@ -222,16 +279,17 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
       setFormError(`Vmax (${dcForm.varietyMax}) must be ≥ Vmin (${dcForm.varietyMin}).`);
       return;
     }
+    if (dcForm.minPortion < 0) {
+      setFormError('Minimum portion cannot be negative.');
+      return;
+    }
     setFormError(null);
     setSolving(true);
     setDcResult(null);
     try {
       const data = await runDeficiencyCoverageOptimization({
-        nutrient: dcForm.nutrient,
-        requiredDosage: dcForm.requiredDosage,
-        calorieMax: dcForm.calorieMax,
-        varietyMin: dcForm.varietyMin,
-        varietyMax: dcForm.varietyMax,
+        ...dcForm,
+        caloriesColumn: mapping.calories,
       });
       setDcResult(data);
     } catch (err) {
@@ -335,6 +393,16 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
           {/* ── Problem 1 form ── */}
           {selectedProblem === 'high-protein' && (
             <form className="opt-form" onSubmit={handleHighProteinSubmit}>
+              <h3 className="opt-form-title">Column Mapping</h3>
+              <div className="opt-form-grid">
+                <ColumnSelect label="Calories (Cᵢ)" value={mapping.calories} columns={numericColumns}
+                  onChange={(v) => handleMappingChange('calories', v)} />
+                <ColumnSelect label="Fat (Fᵢ)" value={mapping.fat} columns={numericColumns}
+                  onChange={(v) => handleMappingChange('fat', v)} />
+                <ColumnSelect label="Protein (Pᵢ)" value={mapping.protein} columns={numericColumns}
+                  onChange={(v) => handleMappingChange('protein', v)} />
+              </div>
+
               <h3 className="opt-form-title">User Input</h3>
               <div className="opt-form-grid">
                 {HIGH_PROTEIN_FIELDS.map((field) => (
@@ -356,7 +424,7 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                 ))}
               </div>
               {formError && <p className="opt-form-error">{formError}</p>}
-              <button type="submit" className="btn-primary" disabled={solving}>
+              <button type="submit" className="btn-primary" disabled={solving || columnsLoading}>
                 {solving ? 'Solving…' : 'Run Optimization'}
               </button>
             </form>
@@ -367,10 +435,14 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
             <form className="opt-form" onSubmit={handleDcSubmit}>
               <h3 className="opt-form-title">User Input</h3>
 
-              {nutrientsLoading ? (
-                <p className="opt-form-loading">Loading nutrient columns…</p>
+              {columnsLoading ? (
+                <p className="opt-form-loading">Loading dataset columns…</p>
               ) : (
                 <div className="opt-form-grid opt-form-grid--dc">
+                  {/* Calorie column (Cᵢ) */}
+                  <ColumnSelect label="Calories (Cᵢ)" value={mapping.calories} columns={numericColumns}
+                    onChange={(v) => handleMappingChange('calories', v)} />
+
                   {/* Nutrient selector (j) */}
                   <label className="opt-field opt-field--full">
                     <span className="opt-field-label">
@@ -382,10 +454,10 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                       onChange={(e) => handleDcChange('nutrient', e.target.value)}
                       className="opt-select"
                     >
-                      {availableNutrients.length === 0 && (
+                      {numericColumns.length === 0 && (
                         <option value="">No columns available</option>
                       )}
-                      {availableNutrients.map((col) => (
+                      {numericColumns.map((col) => (
                         <option key={col} value={col}>
                           {col}
                         </option>
@@ -456,11 +528,27 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                       onChange={(e) => handleDcChange('varietyMax', parseInt(e.target.value, 10) || 1)}
                     />
                   </label>
+
+                  {/* Minimum portion (q_min) */}
+                  <label className="opt-field">
+                    <span className="opt-field-label">
+                      Min portion per selected food (g)
+                      <span className="opt-field-symbol">q_min</span>
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="e.g. 10"
+                      value={dcForm.minPortion}
+                      onChange={(e) => handleDcChange('minPortion', Number(e.target.value))}
+                    />
+                  </label>
                 </div>
               )}
 
               {formError && <p className="opt-form-error">{formError}</p>}
-              <button type="submit" className="btn-primary" disabled={solving || nutrientsLoading}>
+              <button type="submit" className="btn-primary" disabled={solving || columnsLoading}>
                 {solving ? 'Solving…' : 'Run Optimization'}
               </button>
             </form>
@@ -479,6 +567,7 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
           </div>
           <p className="opt-result-message">
             {hpResult.message} Using {hpResult.food_count} food{hpResult.food_count === 1 ? '' : 's'} from the {hpResult.source}.
+            {skippedNote(hpResult.skipped_count)}
           </p>
 
           <div className="opt-totals">
@@ -544,6 +633,7 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
           </div>
           <p className="opt-result-message">
             {dcResult.message} Using {dcResult.food_count} food{dcResult.food_count === 1 ? '' : 's'} from the {dcResult.source}.
+            {skippedNote(dcResult.skipped_count)}
           </p>
 
           {/* Coverage headline */}

@@ -17,11 +17,23 @@ export interface NutritionTargets {
   fiber: number
 }
 
-export interface HighProteinInput {
+/** Columns returned by GET /api/optimization/columns */
+export interface OptimizationColumns {
+  numeric_columns: string[]
+  suggested: { calories: string | null; fat: string | null; protein: string | null }
+}
+
+export interface HighProteinLimits {
   calorieMax: number
   fatMax: number
   proteinMin: number
   quantityMax: number
+}
+
+export interface HighProteinInput extends HighProteinLimits {
+  caloriesColumn: string
+  fatColumn: string
+  proteinColumn: string
 }
 
 export interface HighProteinFoodResult {
@@ -51,6 +63,7 @@ export interface HighProteinResult {
     quantity_max: number
   }
   food_count: number
+  skipped_count: number     // rows ignored because of missing/invalid values
   source: 'dataset' | 'pantry'
 }
 
@@ -140,6 +153,8 @@ export interface DeficiencyCoverageInput {
   calorieMax: number        // Cmax — maximum total calories
   varietyMin: number        // Vmin — minimum distinct foods
   varietyMax: number        // Vmax — maximum distinct foods
+  minPortion: number        // q_min — grams every selected food must get
+  caloriesColumn: string    // column holding Cᵢ
 }
 
 export interface DeficiencyCoverageFoodItem {
@@ -171,8 +186,10 @@ export interface DeficiencyCoverageResult {
     required_dosage: number
     variety_min: number
     variety_max: number
+    min_portion: number
     nutrient: string
   }
   food_count: number
+  skipped_count: number
   source: 'dataset' | 'pantry'
 }
