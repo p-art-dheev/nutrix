@@ -2,22 +2,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding: 1.15rem 0;
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--primary);
-  font-size: 1.25rem;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
-  font-family: inherit;
   transition: opacity 0.2s;
 }
 
@@ -25,9 +20,18 @@
   opacity: 0.85;
 }
 
-.brand-leaf-icon {
-  margin-top: -2px;
+.nav-brand-full {
+  display: block;
+  height: 36px;
+  width: auto;
 }
+
+.nav-brand-mark {
+  display: none;
+  height: 36px;
+  width: 36px;
+}
+
 
 .nav-links {
   display: flex;
@@ -91,4 +95,24 @@
 .btn-arrow {
   margin-left: 2px;
   stroke-width: 2.5px;
+}
+
+@media (max-width: 640px) {
+  .nav-brand-full {
+    display: none;
+  }
+
+  .nav-brand-mark {
+    display: block;
+  }
+
+  /* Keep the three links on one line on phones */
+  .nav-links {
+    gap: 1.1rem;
+  }
+
+  .nav-icon,
+  .btn-get-started {
+    display: none;
+  }
 }

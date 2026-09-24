@@ -1,5 +1,7 @@
 import React from 'react';
 import type { AppView } from '../types/app';
+import brandImg from '../assets/nutrix-brand.webp';
+import logoImg from '../assets/nutrix-logo.webp';
 import './Navbar.css';
 
 interface NavbarProps {
@@ -46,24 +48,10 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ReactNode }[] = [
 export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, onGetStartedClick }) => {
   return (
     <nav className="navbar">
-      <button type="button" className="nav-brand" onClick={() => onNavigate('landing')}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#0F5234"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="brand-leaf-icon"
-          style={{ fill: '#6ca342', stroke: '#0F5234', strokeWidth: '1.8px' }}
-        >
-          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 8 18 13a7 7 0 0 1-7 7z" />
-          <path d="M9 22c2-2.5 3-4.5 3-6.5" />
-        </svg>
-        NUTRIX
+      <button type="button" className="nav-brand" onClick={() => onNavigate('landing')} aria-label="Nutrix home">
+        {/* Full wordmark on wide screens, leaf mark only on phones */}
+        <img src={brandImg} alt="Nutrix" className="nav-brand-full" width={157} height={36} />
+        <img src={logoImg} alt="Nutrix" className="nav-brand-mark" width={36} height={36} />
       </button>
       <div className="nav-links">
         {NAV_ITEMS.map(({ view, label, icon }) => (

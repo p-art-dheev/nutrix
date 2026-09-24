@@ -100,7 +100,15 @@
 }
 
 .card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   padding: 1.5rem 1.5rem 1rem;
+}
+
+.card-logo {
+  width: 22px;
+  height: 22px;
 }
 
 .card-title {

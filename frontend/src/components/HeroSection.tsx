@@ -1,4 +1,5 @@
 import React from 'react';
+import logoImg from '../assets/nutrix-logo.webp';
 import './HeroSection.css';
 
 interface HeroSectionProps {
@@ -52,6 +53,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLoadDatasetClick }) 
       <div className="hero-right">
         <div className="optimization-card surface-card">
           <div className="card-header">
+            <img src={logoImg} alt="" className="card-logo" width={22} height={22} />
             <span className="card-title">OPTIMIZATION</span>
           </div>
           
