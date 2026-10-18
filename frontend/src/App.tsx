@@ -25,14 +25,6 @@ function App() {
     setUploadData(null);
   };
 
-  const handleGetStarted = () => {
-    if (view === 'landing') {
-      handleNavigate('data');
-    } else {
-      handleNavigate('landing');
-    }
-  };
-
   const renderContent = () => {
     switch (view) {
       case 'landing':
@@ -68,7 +60,6 @@ function App() {
           <Navbar
             activeView={view}
             onNavigate={handleNavigate}
-            onGetStartedClick={handleGetStarted}
           />
         </div>
       </header>

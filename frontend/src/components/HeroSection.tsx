@@ -1,5 +1,4 @@
 import React from 'react';
-import logoImg from '../assets/nutrix-logo.webp';
 import './HeroSection.css';
 
 interface HeroSectionProps {
@@ -33,27 +32,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLoadDatasetClick }) 
             </svg>
             Load Dataset
           </button>
-          <button className="btn-see-how">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              stroke="none"
-              className="btn-icon play-icon"
-            >
-              <polygon points="6 3 20 12 6 21 6 3" />
-            </svg>
-            See How It Works
-          </button>
         </div>
       </div>
       
       <div className="hero-right">
         <div className="optimization-card surface-card">
           <div className="card-header">
-            <img src={logoImg} alt="" className="card-logo" width={22} height={22} />
             <span className="card-title">OPTIMIZATION</span>
           </div>
           

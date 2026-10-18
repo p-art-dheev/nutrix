@@ -14,7 +14,6 @@
 }
 
 .process-step {
-  --step-index: 0;
   display: flex;
   align-items: center;
   gap: 1.25rem;
@@ -23,15 +22,6 @@
   padding: 1.25rem 1rem;
   border-radius: 14px;
   border: 1px solid transparent;
-  opacity: 0;
-  transform: translateY(16px);
-  animation:
-    stepEnter 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    stepCycle var(--cycle-duration) ease-in-out infinite;
-  animation-delay:
-    calc(0.12s + var(--step-index) * 0.17s),
-    calc(var(--step-index) * var(--step-duration));
-  transition: border-color 0.35s ease, background-color 0.35s ease;
 }
 
 .step-icon-wrapper {
@@ -53,7 +43,6 @@
   color: #5a9c33;
   box-shadow: 0 8px 24px rgba(15, 82, 52, 0.06);
   margin-bottom: 0.75rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
 .step-icon-box svg {
@@ -66,7 +55,6 @@
   background-color: var(--primary);
   border-radius: 2px;
   opacity: 0.35;
-  transition: opacity 0.3s ease, width 0.3s ease;
 }
 
 .step-content {
@@ -90,66 +78,8 @@
   max-width: 200px;
 }
 
-@keyframes stepEnter {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes stepCycle {
-  0%, 28%, 100% {
-    border-color: transparent;
-    background-color: transparent;
-  }
-  8%, 20% {
-    border-color: rgba(15, 82, 52, 0.12);
-    background-color: rgba(15, 82, 52, 0.03);
-  }
-}
-
-.process-step:nth-child(1) .step-icon-box,
-.process-step:nth-child(3) .step-icon-box,
-.process-step:nth-child(5) .step-icon-box {
-  animation: iconPulse var(--cycle-duration) ease-in-out infinite;
-}
-
-.process-step:nth-child(1) .step-icon-box { animation-delay: 0s; }
-.process-step:nth-child(3) .step-icon-box { animation-delay: var(--step-duration); }
-.process-step:nth-child(5) .step-icon-box { animation-delay: calc(var(--step-duration) * 2); }
-
-.process-step:nth-child(1) .icon-underline { animation: underlinePulse var(--cycle-duration) ease-in-out infinite; }
-.process-step:nth-child(3) .icon-underline { animation: underlinePulse var(--cycle-duration) ease-in-out infinite var(--step-duration); }
-.process-step:nth-child(5) .icon-underline { animation: underlinePulse var(--cycle-duration) ease-in-out infinite calc(var(--step-duration) * 2); }
-
-@keyframes iconPulse {
-  0%, 28%, 100% {
-    transform: translateY(0);
-    box-shadow: 0 8px 24px rgba(15, 82, 52, 0.06);
-    color: #5a9c33;
-  }
-  8%, 20% {
-    transform: translateY(-5px);
-    box-shadow: 0 14px 28px rgba(15, 82, 52, 0.12);
-    color: var(--primary);
-  }
-}
-
-@keyframes underlinePulse {
-  0%, 28%, 100% {
-    opacity: 0.35;
-    width: 32px;
-  }
-  8%, 20% {
-    opacity: 1;
-    width: 42px;
-  }
-}
-
 /* Dashed line → arrowhead connectors */
 .process-connector {
-  --connector-index: 0;
-  --line-length: 64;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -175,35 +105,11 @@
   stroke: var(--primary);
   stroke-width: 2.5;
   fill: none;
-  stroke-dashoffset: var(--line-length);
-  animation: connectorDraw var(--cycle-duration) ease-in-out infinite;
-  animation-delay: calc(var(--connector-index) * var(--step-duration) + 0.75s);
+  stroke-dashoffset: 0;
 }
 
 .connector-arrowhead {
-  fill: var(--border-color);
-  animation: arrowheadColor var(--cycle-duration) ease-in-out infinite;
-  animation-delay: calc(var(--connector-index) * var(--step-duration) + 0.75s);
-}
-
-@keyframes connectorDraw {
-  0%, 12%, 100% {
-    stroke-dashoffset: var(--line-length);
-    opacity: 0.3;
-  }
-  22%, 32% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-
-@keyframes arrowheadColor {
-  0%, 12%, 100% {
-    fill: var(--border-color);
-  }
-  22%, 32% {
-    fill: var(--primary);
-  }
+  fill: var(--primary);
 }
 
 @media (max-width: 992px) {
@@ -243,27 +149,5 @@
   .process-connector .connector-svg {
     width: 56px;
     height: 24px;
-  }
-
-  .process-connector .connector-active {
-    animation-name: connectorDraw;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .process-step,
-  .step-icon-box,
-  .icon-underline,
-  .connector-active,
-  .connector-arrowhead {
-    animation: none !important;
-    opacity: 1;
-    transform: none;
-    stroke-dashoffset: 0;
-  }
-
-  .process-step {
-    border-color: transparent;
-    background-color: transparent;
   }
 }

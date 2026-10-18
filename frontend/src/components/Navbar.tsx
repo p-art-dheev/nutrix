@@ -1,7 +1,5 @@
 import React from 'react';
 import type { AppView } from '../types/app';
-import brandImg from '../assets/nutrix-brand.webp';
-import logoImg from '../assets/nutrix-logo.webp';
 import './Navbar.css';
 
 interface NavbarProps {
@@ -45,13 +43,11 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, onGetStartedClick }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate }) => {
   return (
     <nav className="navbar">
       <button type="button" className="nav-brand" onClick={() => onNavigate('landing')} aria-label="Nutrix home">
-        {/* Full wordmark on wide screens, leaf mark only on phones */}
-        <img src={brandImg} alt="Nutrix" className="nav-brand-full" width={157} height={36} />
-        <img src={logoImg} alt="Nutrix" className="nav-brand-mark" width={36} height={36} />
+        <span className="nav-brand-text">Nutrix</span>
       </button>
       <div className="nav-links">
         {NAV_ITEMS.map(({ view, label, icon }) => (
@@ -65,24 +61,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, onGetSta
             {label}
           </button>
         ))}
-        <button className="btn-get-started" onClick={onGetStartedClick}>
-          Get Started
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="btn-arrow"
-          >
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </svg>
-        </button>
       </div>
     </nav>
   );
