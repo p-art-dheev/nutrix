@@ -24,6 +24,7 @@ COLUMN_HINTS: dict[str, tuple[str, ...]] = {
     "calories": ("caloric value", "calories", "calorie", "energy", "kcal"),
     "fat": ("total fat", "fat"),
     "protein": ("protein",),
+    "carbohydrates": ("carbohydrates", "carbohydrate", "carbs", "carb"),
 }
 
 # Numeric columns that are identifiers, not nutrients.

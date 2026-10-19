@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.preprocessing import drop_impossible_rows
 from app.storage import save_dataset
 
 router = APIRouter()
@@ -32,6 +33,7 @@ async def upload_data(files: List[UploadFile] = File(...)):
         raise HTTPException(status_code=400, detail="No valid CSV files to process")
 
     combined_df = pd.concat(dfs, ignore_index=True)
+    combined_df, rows_removed = drop_impossible_rows(combined_df)
     dataset_id = save_dataset(combined_df)
 
     return {
@@ -40,4 +42,5 @@ async def upload_data(files: List[UploadFile] = File(...)):
         "files_processed": len(files),
         "food_items": len(combined_df),
         "columns": len(combined_df.columns),
+        "rows_removed": rows_removed,  # impossible nutrient values
     }

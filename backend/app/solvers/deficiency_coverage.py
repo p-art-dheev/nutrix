@@ -7,14 +7,15 @@ Decision variables
     y  ∈ [0, 1]   fraction of the deficiency covered
 
     max  Z = y
-    s.t. Σ (Cᵢ/100)·qᵢ ≤ Cmax                  1. calorie capacity
-         y·D ≤ Σ (Nᵢ/100)·qᵢ                   2. deficiency coverage
-                                                  (slide: y ≤ Σ(Nᵢ/100)·qᵢ / D, both sides × D)
-         Vmin ≤ Σ xᵢ ≤ Vmax                    3. food variety
+    s.t. Σ (Cᵢ/100)·qᵢ ≤ Cmax                  1. maximum calorie capacity
+         y ≤ Σ (Nᵢ/100)·qᵢ / D                 2. deficiency coverage
+                                                  (coded as y·D ≤ Σ (Nᵢ/100)·qᵢ, same since D > 0)
+         Vmin ≤ Σ xᵢ ≤ Vmax                    3. minimum and maximum food varieties
          qᵢ ≤ Mᵢ·xᵢ,  Mᵢ = 100·Cmax / Cᵢ       4. quantity–selection linking (big-M)
-         qᵢ ≥ q_min·xᵢ                         5. minimum portion  (added to the slide model:
-                                                  a food counted in Vmin must actually be eaten)
+         qᵢ ≥ q_min·xᵢ                         5. minimum portion
          xᵢ ∈ {0,1},  qᵢ ≥ 0,  0 ≤ y ≤ 1       6. variable restrictions
+
+    Foods with Cᵢ = 0 are left out, since Mᵢ is undefined for them.
 
     Cᵢ = calories of food i per 100 g
     Nᵢ = amount of the deficient nutrient in food i per 100 g
@@ -29,14 +30,8 @@ from app.solvers.common import solve, value
 
 
 def big_m(calories_per_100g: float, calorie_max: float) -> float:
-    """
-    Mᵢ = most grams of food i that fit in the calorie budget (slide 11).
-    A 0-kcal food is never limited by calories, so we fall back to the grams
-    a 1 kcal/100 g food could reach (100·Cmax) to keep M finite.
-    """
-    if calories_per_100g > 0:
-        return 100 * calorie_max / calories_per_100g
-    return 100 * calorie_max
+    """Mᵢ = most grams of food i that fit in the calorie budget (slide 11)."""
+    return 100 * calorie_max / calories_per_100g
 
 
 def solve_deficiency_coverage(
@@ -47,6 +42,10 @@ def solve_deficiency_coverage(
     variety_max: int,
     min_portion: float,
 ) -> dict:
+    # Mᵢ = 100·Cmax / Cᵢ is undefined for a 0-kcal food, so leave those out
+    zero_calorie = sum(1 for f in foods if f["calories"] <= 0)
+    foods = [f for f in foods if f["calories"] > 0]
+
     if not foods:
         raise ValueError("No usable foods to optimize. Check your pantry or dataset.")
     if variety_min > variety_max:
@@ -129,9 +128,12 @@ def solve_deficiency_coverage(
     rows.sort(key=lambda row: row["nutrient_obtained"], reverse=True)
 
     coverage = min(max(value(y), 0.0), 1.0)  # clamp tiny solver noise
+    message = "Optimal deficiency-coverage plan found."
+    if zero_calorie:
+        message += f" {zero_calorie} food{'s' if zero_calorie != 1 else ''} with 0 kcal left out."
     return {
         "status": "Optimal",
-        "message": "Optimal deficiency-coverage plan found.",
+        "message": message,
         "foods": rows,
         "totals": {
             "calories": round(value(calories), 2),

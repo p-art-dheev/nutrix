@@ -107,3 +107,37 @@ def get_distribution(column_name: str, bins: int = 5, df: pd.DataFrame = Depends
         },
         "distribution": distribution_data
     }
+
+@router.get("/api/data/correlation")
+def get_correlation(x: str, y: str, df: pd.DataFrame = Depends(current_dataset)):
+    """
+    Returns the Pearson correlation between two numeric columns, plus the
+    points for a scatter plot.
+    """
+
+    for column_name in (x, y):
+        if column_name not in df.columns:
+            raise HTTPException(status_code=404, detail=f"Column '{column_name}' not found.")
+        if not pd.api.types.is_numeric_dtype(df[column_name]):
+            raise HTTPException(status_code=400, detail=f"Column '{column_name}' is not numeric.")
+
+    # Only rows where both values are present
+    pairs = pd.DataFrame({"x": df[x], "y": df[y]}).dropna()
+
+    if len(pairs) < 2:
+        raise HTTPException(status_code=400, detail="Need at least two rows with values in both columns.")
+
+    r = float(pairs["x"].corr(pairs["y"]))
+    if math.isnan(r):
+        r = None  # one column is constant, so correlation is undefined
+
+    # Keep the chart fast on large datasets
+    sample = pairs.sample(n=2000, random_state=0) if len(pairs) > 2000 else pairs
+
+    return {
+        "x": x,
+        "y": y,
+        "pearson_r": r,
+        "pair_count": int(len(pairs)),
+        "points": [{"x": float(px), "y": float(py)} for px, py in zip(sample["x"], sample["y"])],
+    }

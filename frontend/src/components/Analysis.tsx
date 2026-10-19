@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DescriptiveStats } from './DescriptiveStats';
 import { DistributionAnalysis } from './DistributionAnalysis';
+import { CorrelationAnalysis } from './CorrelationAnalysis';
 import './AnalysisWrapper.css';
 
 interface AnalysisProps {
@@ -9,14 +10,14 @@ interface AnalysisProps {
 }
 
 export const Analysis: React.FC<AnalysisProps> = ({ hasData, onNavigateToData }) => {
-  const [activeTab, setActiveTab] = useState<'descriptive' | 'distribution'>('descriptive');
+  const [activeTab, setActiveTab] = useState<'descriptive' | 'distribution' | 'correlation'>('descriptive');
 
   if (!hasData) {
     return (
       <div className="analysis-wrapper">
         <div className="analysis-page-header">
           <h1>Analysis</h1>
-          <p>Explore descriptive statistics and distribution visualizations for your dataset.</p>
+          <p>Explore descriptive statistics, distributions and correlations for your dataset.</p>
         </div>
         <div className="analysis-empty surface-card">
           <div className="empty-icon">
@@ -39,7 +40,7 @@ export const Analysis: React.FC<AnalysisProps> = ({ hasData, onNavigateToData })
     <div className="analysis-wrapper">
       <div className="analysis-page-header">
         <h1>Analysis</h1>
-        <p>Explore descriptive statistics and distribution visualizations for your dataset.</p>
+        <p>Explore descriptive statistics, distributions and correlations for your dataset.</p>
       </div>
 
       <div className="analysis-tabs">
@@ -55,11 +56,18 @@ export const Analysis: React.FC<AnalysisProps> = ({ hasData, onNavigateToData })
         >
           Distribution Analysis
         </button>
+        <button 
+          className={`tab-button ${activeTab === 'correlation' ? 'active' : ''}`}
+          onClick={() => setActiveTab('correlation')}
+        >
+          Correlation
+        </button>
       </div>
 
       <div className="tab-content">
         {activeTab === 'descriptive' && <DescriptiveStats />}
         {activeTab === 'distribution' && <DistributionAnalysis />}
+        {activeTab === 'correlation' && <CorrelationAnalysis />}
       </div>
     </div>
   );

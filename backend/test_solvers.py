@@ -12,6 +12,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from app.preprocessing import drop_impossible_rows
 from app.solvers.common import load_foods, resolve_columns, suggest_column
 from app.solvers.deficiency_coverage import solve_deficiency_coverage
 from app.solvers.high_protein import solve_high_protein
@@ -73,12 +74,20 @@ def test_milp_every_selected_food_gets_min_portion():
 
 
 def test_milp_partial_coverage_when_budget_is_tight():
-    # Tea is left out: a 0-kcal food is not limited by Cmax (no Qmax in this model)
-    foods = [f for f in foods_for({"calories": None, "nutrient": "Iron"}) if f["calories"] > 0]
+    foods = foods_for({"calories": None, "nutrient": "Iron"})
     r = solve_deficiency_coverage(foods, required_dosage=18, calorie_max=100,
                                   variety_min=1, variety_max=5, min_portion=10)
     assert r["status"] == "Optimal"
     assert 0 < r["totals"]["deficiency_coverage_fraction"] < 1
+
+
+def test_milp_leaves_out_zero_calorie_foods():
+    # Tea (0 kcal) would only be limited by big-M, so the model ignores it
+    foods = foods_for({"calories": None, "nutrient": "Iron"})
+    r = solve_deficiency_coverage(foods, required_dosage=18, calorie_max=2000,
+                                  variety_min=1, variety_max=6, min_portion=10)
+    assert "Tea" not in [row["food"] for row in r["foods"]]
+    assert "1 food with 0 kcal left out" in r["message"]
 
 
 def test_milp_bad_variety_bounds():
@@ -102,6 +111,16 @@ def test_rows_with_missing_values_are_skipped():
     foods, skipped = load_foods(df, ALL_ROWS, columns)
     assert skipped == 1
     assert "Beef Liver" not in [f["name"] for f in foods]
+
+
+def test_impossible_rows_are_dropped():
+    df = pd.DataFrame({"food": ["Egg", "Bad yoghurt"], "Caloric Value": [80, 140],
+                       "Fat": [5.3, 0.4], "Carbohydrates": [0.4, 19.3], "Protein": [7.0, 175.0]})
+    cleaned, removed = drop_impossible_rows(df)
+    assert removed == 1
+    assert cleaned["food"].tolist() == ["Egg"]
+    # No carbs column -> the check cannot run, nothing is removed
+    assert drop_impossible_rows(df.drop(columns="Carbohydrates"))[1] == 0
 
 
 def test_column_suggestion_prefers_total_fat():

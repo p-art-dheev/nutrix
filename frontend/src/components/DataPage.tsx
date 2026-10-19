@@ -111,6 +111,8 @@ export const DataPage: React.FC<DataPageProps> = ({
                 <p>
                   {uploadData.food_items.toLocaleString()} items · {uploadData.columns} columns ·{' '}
                   {uploadData.files_processed} file{uploadData.files_processed !== 1 ? 's' : ''}
+                  {!!uploadData.rows_removed &&
+                    ` · ${uploadData.rows_removed} row${uploadData.rows_removed !== 1 ? 's' : ''} with impossible values removed`}
                 </p>
               </div>
             </div>

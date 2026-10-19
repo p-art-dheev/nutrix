@@ -495,34 +495,6 @@
   font-weight: 600;
 }
 
-/* Coverage progress bar */
-.coverage-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.coverage-bar-track {
-  flex: 1;
-  height: 10px;
-  background: var(--border-color);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.coverage-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.6s ease;
-}
-
-.coverage-bar-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  min-width: 44px;
-  text-align: right;
-}
-
 /* DC result card */
 .dc-result {
   border-top: 3px solid var(--primary);
@@ -530,7 +502,7 @@
 
 /* 5-column totals strip for DC (calories, nutrient, xi-selected, qi-allocated, coverage) */
 .opt-totals--dc {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 /* xᵢ binary badge in the results table */
@@ -552,7 +524,7 @@
   }
 
   .opt-totals--dc {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr 1fr;
   }
 
   .dc-coverage-pct {
@@ -560,3 +532,10 @@
   }
 }
 
+
+.opt-chart {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}

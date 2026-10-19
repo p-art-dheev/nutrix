@@ -45,22 +45,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLoadDatasetClick }) 
             <div className="metric-row">
               <span className="metric-label">Calories</span>
               <span className="metric-value">2,184 kcal</span>
-              <span className="metric-check">✓</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Protein</span>
               <span className="metric-value">142 g</span>
-              <span className="metric-check">✓</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Fiber</span>
               <span className="metric-value">31 g</span>
-              <span className="metric-check">✓</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Cost</span>
               <span className="metric-value">₹286</span>
-              <span className="metric-check">✓</span>
             </div>
           </div>
           

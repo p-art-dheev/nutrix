@@ -1,5 +1,5 @@
 import math
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -32,9 +32,3 @@ def serialize_value(value: Any) -> Any:
 def row_to_dict(df: pd.DataFrame, row_index: int, columns: list[str]) -> dict[str, Any]:
     row = df.iloc[row_index]
     return {col: serialize_value(row[col]) for col in columns}
-
-
-def get_food_name(df: pd.DataFrame, row_index: int) -> Optional[str]:
-    food_col = get_food_column(df)
-    value = serialize_value(df.iloc[row_index][food_col])
-    return str(value) if value is not None else None

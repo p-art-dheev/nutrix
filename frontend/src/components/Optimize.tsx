@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { OptimizationProblem } from '../types/app';
 import type {
   HighProteinLimits,
@@ -119,27 +120,26 @@ const skippedNote = (count: number) =>
   count > 0 ? ` ${count} row${count === 1 ? ' was' : 's were'} skipped because of missing or invalid values.` : '';
 
 // ─────────────────────────────────────────────
-// Helper: Coverage bar
+// Helper: grams of each recommended food
 // ─────────────────────────────────────────────
 
-const CoverageBar: React.FC<{ pct: number }> = ({ pct }) => {
-  const clamped = Math.min(100, Math.max(0, pct));
-  const color =
-    clamped >= 80 ? 'var(--success)' : clamped >= 40 ? 'var(--warning)' : 'var(--error)';
-  return (
-    <div className="coverage-bar-wrap">
-      <div className="coverage-bar-track">
-        <div
-          className="coverage-bar-fill"
-          style={{ width: `${clamped}%`, background: color }}
+const QuantityChart: React.FC<{ foods: { id: number; food: string; quantity: number }[] }> = ({ foods }) => (
+  <div className="opt-chart">
+    <h3 className="opt-form-title">Quantity per food (g)</h3>
+    <ResponsiveContainer width="100%" height={Math.max(160, foods.length * 36)}>
+      <BarChart data={foods} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+        <XAxis type="number" tick={{ fontSize: 12 }} />
+        <YAxis type="category" dataKey="food" width={160} tick={{ fontSize: 12 }} />
+        <Tooltip
+          formatter={(value) => [`${Number(value).toLocaleString()} g`, 'Quantity']}
+          contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
         />
-      </div>
-      <span className="coverage-bar-label" style={{ color }}>
-        {clamped.toFixed(1)}%
-      </span>
-    </div>
-  );
-};
+        <Bar dataKey="quantity" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
 
 // ─────────────────────────────────────────────
 // Component props
@@ -593,6 +593,8 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
             </div>
           </div>
 
+          {hpResult.foods.length > 0 && <QuantityChart foods={hpResult.foods} />}
+
           {hpResult.foods.length > 0 && (
             <div className="opt-result-table-wrap">
               <table className="opt-result-table">
@@ -646,11 +648,8 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                     {dcResult.totals.deficiency_coverage_pct.toFixed(1)}%
                   </strong>
                 </div>
-                <CoverageBar pct={dcResult.totals.deficiency_coverage_pct} />
                 <p className="dc-coverage-sub">
-                  yⱼ = {dcResult.totals.deficiency_coverage_fraction.toFixed(4)} &nbsp;|&nbsp;
-                  Nutrient obtained: <strong>{dcResult.totals.nutrient_obtained.toFixed(4)}</strong> units &nbsp;|&nbsp;
-                  Required (D): <strong>{dcResult.totals.required_dosage}</strong> units
+                  Objective Z = yⱼ = <strong>{dcResult.totals.deficiency_coverage_fraction.toFixed(4)}</strong>
                 </p>
               </div>
 
@@ -675,12 +674,9 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                   <strong>{dcResult.totals.food_count_with_quantity}</strong>
                   <em>Non-zero quantity</em>
                 </div>
-                <div className="opt-total">
-                  <span>Coverage yⱼ</span>
-                  <strong>{dcResult.totals.deficiency_coverage_pct.toFixed(2)}%</strong>
-                  <em>Objective value</em>
-                </div>
               </div>
+
+              {dcResult.foods.length > 0 && <QuantityChart foods={dcResult.foods} />}
 
               {dcResult.foods.length > 0 && (
                 <div className="opt-result-table-wrap">

@@ -88,15 +88,6 @@ body {
   padding-bottom: 0;
 }
 
-.landing-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  flex: 1;
-  min-height: calc(100dvh - var(--app-header-h));
-  padding: 1.5rem 0;
-}
-
 .page-view {
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;

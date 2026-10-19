@@ -30,21 +30,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue, onU
     }
     setError(null);
     
-    // Start Progression
     setStep('processing');
-    
-    // Simulate Validate step for UX
-    setProgressMsg('Validating...');
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    setProgressMsg('Processing...');
+    setProgressMsg('Uploading...');
     
     try {
       const data = await uploadDataset(csvFiles);
-      
-      // Simulate slight delay before ready for smooth UX
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
       setUploadData(data);
       onUploadSuccess?.(data);
       setStep('ready');
