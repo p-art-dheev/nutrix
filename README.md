@@ -85,7 +85,7 @@ The Vite dev server forwards every `/api/...` request to the backend on port 800
 
 ## Usage
 1. Open the frontend in your browser.
-2. On the **Data** page, upload your CSV files containing the food and nutrition data.
+2. Click **Load Dataset** on the home page, then upload your CSV files.
 3. The backend will validate, process, and merge the datasets using Pandas.
 4. Review the dataset statistics in the UI and proceed to optimization.
 

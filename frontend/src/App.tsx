@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navbar } from './components/Navbar';
+import { HeroSection } from './components/HeroSection';
 import { Analysis } from './components/Analysis';
 import { DataPage } from './components/DataPage';
 import { Optimize } from './components/Optimize';
@@ -7,7 +8,7 @@ import { setDatasetId } from './services/session';
 import type { AppView, UploadData } from './types/app';
 
 function App() {
-  const [view, setView] = useState<AppView>('data');
+  const [view, setView] = useState<AppView>('landing');
   const [uploadData, setUploadData] = useState<UploadData | null>(null);
 
   const handleNavigate = (target: AppView) => {
@@ -25,6 +26,12 @@ function App() {
 
   const renderContent = () => {
     switch (view) {
+      case 'landing':
+        return (
+          <div className="landing-page">
+            <HeroSection onLoadDatasetClick={() => handleNavigate('data')} />
+          </div>
+        );
       case 'data':
         return (
           <DataPage
@@ -59,7 +66,7 @@ function App() {
         <div
           className={[
             'app-container',
-            'page-view',
+            view !== 'landing' ? 'page-view' : '',
             view === 'data' && uploadData ? 'app-container--full' : '',
           ]
             .filter(Boolean)

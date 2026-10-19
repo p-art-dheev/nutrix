@@ -45,7 +45,7 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ReactNode }[] = [
 export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate }) => {
   return (
     <nav className="navbar">
-      <button type="button" className="nav-brand" onClick={() => onNavigate('data')} aria-label="Nutrix home">
+      <button type="button" className="nav-brand" onClick={() => onNavigate('landing')} aria-label="Nutrix home">
         <span className="nav-brand-text">Nutrix</span>
       </button>
       <div className="nav-links">

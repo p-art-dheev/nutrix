@@ -34,38 +34,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLoadDatasetClick }) 
           </button>
         </div>
       </div>
-      
-      <div className="hero-right">
-        <div className="optimization-card surface-card">
-          <div className="card-header">
-            <span className="card-title">OPTIMIZATION</span>
-          </div>
-          
-          <div className="card-body">
-            <div className="metric-row">
-              <span className="metric-label">Calories</span>
-              <span className="metric-value">2,184 kcal</span>
-            </div>
-            <div className="metric-row">
-              <span className="metric-label">Protein</span>
-              <span className="metric-value">142 g</span>
-            </div>
-            <div className="metric-row">
-              <span className="metric-label">Fiber</span>
-              <span className="metric-value">31 g</span>
-            </div>
-            <div className="metric-row">
-              <span className="metric-label">Cost</span>
-              <span className="metric-value">₹286</span>
-            </div>
-          </div>
-          
-          <div className="card-footer">
-            <div className="status-indicator"></div>
-            <span>Optimal solution found</span>
-          </div>
-        </div>
-      </div>
     </section>
   );
 };

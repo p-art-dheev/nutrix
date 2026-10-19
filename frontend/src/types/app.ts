@@ -1,4 +1,4 @@
-export type AppView = 'data' | 'analysis' | 'optimize';
+export type AppView = 'landing' | 'data' | 'analysis' | 'optimize';
 
 export interface UploadData {
   files_processed: number;
