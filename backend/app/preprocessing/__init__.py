@@ -1,7 +1,7 @@
 """
 Preprocessing applied to every uploaded dataset, before it is stored.
 
-Kept separate from analysis and optimization so they always receive data
+Kept separate from statistics and optimization so they always receive data
 that has already been checked. The steps run in this order:
 
     1. drop index columns          cleaning.drop_index_columns

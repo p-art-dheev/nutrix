@@ -1,9 +1,9 @@
 """
 Nutrix API.
 
-    routers/        HTTP endpoints only (upload, data, analysis, optimization)
+    routers/        HTTP endpoints only (upload, data, statistics, optimization)
     preprocessing/  cleaning applied to every upload
-    analysis/       descriptive statistics, distribution, correlation
+    statistics/     descriptive statistics, distribution, correlation
     optimization/   Problem 1 (LP) and Problem 2 (MILP)
     columns.py      which dataset column holds what
     storage.py      where uploaded datasets are kept
@@ -11,7 +11,7 @@ Nutrix API.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, analysis, data, optimization
+from app.routers import upload, statistics, data, optimization
 
 app = FastAPI(title="Nutrix API")
 
@@ -31,6 +31,6 @@ def read_root():
 
 # Include routers
 app.include_router(upload.router)
-app.include_router(analysis.router)
+app.include_router(statistics.router)
 app.include_router(data.router)
 app.include_router(optimization.router)

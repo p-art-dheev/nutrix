@@ -1,14 +1,14 @@
 """
 HTTP layer for the statistical analysis (Analysis page).
-The calculations live in app/analysis/.
+The calculations live in app/statistics/.
 """
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.analysis.correlation import pearson
-from app.analysis.descriptive import describe
-from app.analysis.distribution import histogram
+from app.statistics.correlation import pearson
+from app.statistics.descriptive import describe
+from app.statistics.distribution import histogram
 from app.columns import numeric_columns
 from app.storage import current_dataset
 

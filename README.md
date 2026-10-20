@@ -22,7 +22,7 @@ backend/app/
 ├── preprocessing/              cleaning applied to every upload
 │   ├── cleaning.py             1. drop index columns   2. drop all-zero rows
 │   └── validation.py           3. drop rows with impossible values (4-4-9 kcal rule)
-├── analysis/                   statistics on the Analysis page
+├── statistics/                 statistics on the Analysis page
 │   ├── descriptive.py          count, mean, median, std dev, min, max, Q1, Q3
 │   ├── distribution.py         histogram with equal-width bins
 │   └── correlation.py          Pearson r + scatter points
@@ -31,7 +31,7 @@ backend/app/
 │   ├── problem2_deficiency_coverage.py    Problem 2: Deficiency-Aware Food Selection (MILP)
 │   └── common.py                          load foods, solve with CBC, read values
 └── routers/                    HTTP endpoints only, no calculations
-    ├── upload.py  data.py  analysis.py  optimization.py
+    ├── upload.py  data.py  statistics.py  optimization.py
 
 frontend/src/
 ├── App.tsx                     switches between the pages

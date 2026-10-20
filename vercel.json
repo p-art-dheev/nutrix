@@ -7,7 +7,7 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 60,
-      "excludeFiles": "{frontend/**,data/**,docs/**,backend/venv/**,backend/.datasets/**,backend/graphify-out/**,backend/test_*.py,**/__pycache__/**}"
+      "excludeFiles": "{frontend/**,data/**,backend/venv/**,backend/.datasets/**,backend/graphify-out/**,**/__pycache__/**}"
     }
   },
   "rewrites": [

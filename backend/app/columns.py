@@ -2,7 +2,7 @@
 Column detection: which dataset column holds what.
 
 Detection is by column name only, so any dataset with recognizable names works.
-Used by preprocessing, statistical analysis and both optimization problems.
+Used by preprocessing, statistics and both optimization problems.
 """
 
 import re
