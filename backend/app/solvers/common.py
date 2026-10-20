@@ -18,8 +18,8 @@ import pulp
 
 from app.data_utils import get_food_column
 
-# Names we try (in order) when pre-filling the column-mapping dropdowns.
-# These are only suggestions — the user can always pick a different column.
+# Names we try (in order) to detect which column holds each value.
+# Detection is by column name only, so any dataset with recognizable names works.
 COLUMN_HINTS: dict[str, tuple[str, ...]] = {
     "calories": ("caloric value", "calories", "calorie", "energy", "kcal"),
     "fat": ("total fat", "fat"),
@@ -82,7 +82,7 @@ def resolve_columns(df: pd.DataFrame, mapping: dict[str, Optional[str]]) -> dict
     for role, column in mapping.items():
         column = column or suggest_column(df, role)
         if column is None:
-            raise ValueError(f"Could not find a '{role}' column. Please map it manually.")
+            raise ValueError(f"Could not find a '{role}' column in this dataset.")
         if column not in df.columns:
             raise ValueError(f"Column '{column}' (mapped to {role}) is not in the dataset.")
         if column not in available:

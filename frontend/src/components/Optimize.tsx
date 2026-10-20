@@ -89,32 +89,14 @@ const EMPTY_DEFICIENCY: Omit<DeficiencyCoverageInput, 'caloriesColumn'> = {
   minPortion: 10,
 };
 
-// Which dataset column holds each value the models need
+// Which dataset column holds each value the models need.
+// Detected automatically from the column names; not editable by the user.
 type ColumnMapping = { calories: string; fat: string; protein: string };
 const EMPTY_MAPPING: ColumnMapping = { calories: '', fat: '', protein: '' };
 
-// ─────────────────────────────────────────────
-// Helper: column dropdown
-// ─────────────────────────────────────────────
-
-const ColumnSelect: React.FC<{
-  label: string;
-  value: string;
-  columns: string[];
-  onChange: (value: string) => void;
-}> = ({ label, value, columns, onChange }) => (
-  <label className="opt-field">
-    <span className="opt-field-label">{label} column</span>
-    <select className="opt-select" value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">Select a column…</option>
-      {columns.map((col) => (
-        <option key={col} value={col}>
-          {col}
-        </option>
-      ))}
-    </select>
-  </label>
-);
+const missingColumnsError = (roles: string[]) =>
+  `This dataset has no recognizable ${roles.join(', ')} column ` +
+  `(expected names such as "Calories" / "Caloric Value", "Fat", "Protein").`;
 
 const skippedNote = (count: number) =>
   count > 0 ? ` ${count} row${count === 1 ? ' was' : 's were'} skipped because of missing or invalid values.` : '';
@@ -165,7 +147,7 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
   const [dcForm, setDcForm] = useState(EMPTY_DEFICIENCY);
   const [dcResult, setDcResult] = useState<DeficiencyCoverageResult | null>(null);
 
-  // Column mapping (shared by both problems)
+  // Column mapping (shared by both problems, auto-detected)
   const [columns, setColumns] = useState<OptimizationColumns | null>(null);
   const [columnsLoading, setColumnsLoading] = useState(false);
   const [mapping, setMapping] = useState<ColumnMapping>(EMPTY_MAPPING);
@@ -194,11 +176,6 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
       .finally(() => setColumnsLoading(false));
   };
 
-  const handleMappingChange = (key: keyof ColumnMapping, value: string) => {
-    setMapping((prev) => ({ ...prev, [key]: value }));
-    setFormError(null);
-  };
-
   const handleSelectProblem = (id: OptimizationProblem) => {
     setSelectedProblem(id);
     setFormError(null);
@@ -215,8 +192,9 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
 
   const handleHighProteinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mapping.calories || !mapping.fat || !mapping.protein) {
-      setFormError('Map the Calories, Fat and Protein columns first.');
+    const missing = (['calories', 'fat', 'protein'] as const).filter((role) => !mapping[role]);
+    if (missing.length > 0) {
+      setFormError(missingColumnsError(missing));
       return;
     }
     const values: Partial<HighProteinLimits> = {};
@@ -256,7 +234,7 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
   const handleDcSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mapping.calories) {
-      setFormError('Map the Calories column first.');
+      setFormError(missingColumnsError(['calories']));
       return;
     }
     if (!dcForm.nutrient) {
@@ -393,16 +371,6 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
           {/* ── Problem 1 form ── */}
           {selectedProblem === 'high-protein' && (
             <form className="opt-form" onSubmit={handleHighProteinSubmit}>
-              <h3 className="opt-form-title">Column Mapping</h3>
-              <div className="opt-form-grid">
-                <ColumnSelect label="Calories (Cᵢ)" value={mapping.calories} columns={numericColumns}
-                  onChange={(v) => handleMappingChange('calories', v)} />
-                <ColumnSelect label="Fat (Fᵢ)" value={mapping.fat} columns={numericColumns}
-                  onChange={(v) => handleMappingChange('fat', v)} />
-                <ColumnSelect label="Protein (Pᵢ)" value={mapping.protein} columns={numericColumns}
-                  onChange={(v) => handleMappingChange('protein', v)} />
-              </div>
-
               <h3 className="opt-form-title">User Input</h3>
               <div className="opt-form-grid">
                 {HIGH_PROTEIN_FIELDS.map((field) => (
@@ -439,10 +407,6 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                 <p className="opt-form-loading">Loading dataset columns…</p>
               ) : (
                 <div className="opt-form-grid opt-form-grid--dc">
-                  {/* Calorie column (Cᵢ) */}
-                  <ColumnSelect label="Calories (Cᵢ)" value={mapping.calories} columns={numericColumns}
-                    onChange={(v) => handleMappingChange('calories', v)} />
-
                   {/* Nutrient selector (j) */}
                   <label className="opt-field opt-field--full">
                     <span className="opt-field-label">
