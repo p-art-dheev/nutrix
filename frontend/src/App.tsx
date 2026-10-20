@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './pages/LandingPage/LandingPage';
-import { AnalysisPage } from './pages/AnalysisPage/AnalysisPage';
+import { StatisticsPage } from './pages/StatisticsPage/StatisticsPage';
 import { DataPage } from './pages/DataPage/DataPage';
 import { OptimizePage } from './pages/OptimizePage/OptimizePage';
 import { setDatasetId } from './services/session';
@@ -43,7 +43,7 @@ function App() {
           />
         );
       case 'analysis':
-        return <AnalysisPage hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
+        return <StatisticsPage hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
       case 'optimize':
         return <OptimizePage hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
       default:

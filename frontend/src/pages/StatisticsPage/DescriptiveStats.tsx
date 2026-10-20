@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAnalysisColumns, fetchDescriptiveStats } from '../../services/analysisApi';
-import type { DescriptiveStatistics } from '../../types/analysis';
+import { fetchStatisticsColumns, fetchDescriptiveStats } from '../../services/statisticsApi';
+import type { DescriptiveStatistics } from '../../types/statistics';
 
 export const DescriptiveStats: React.FC = () => {
   const [columns, setColumns] = useState<string[]>([]);
@@ -11,7 +11,7 @@ export const DescriptiveStats: React.FC = () => {
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetchAnalysisColumns()
+    fetchStatisticsColumns()
       .then(cols => {
         if (cols.length > 0) {
           setColumns(cols);

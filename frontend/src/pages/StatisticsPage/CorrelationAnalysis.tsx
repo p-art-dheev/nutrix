@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchAnalysisColumns, fetchCorrelation } from '../../services/analysisApi';
-import type { CorrelationResult } from '../../types/analysis';
+import { fetchStatisticsColumns, fetchCorrelation } from '../../services/statisticsApi';
+import type { CorrelationResult } from '../../types/statistics';
 
 // Common rule of thumb for reading |r|
 const describeStrength = (r: number | null) => {
@@ -24,7 +24,7 @@ export const CorrelationAnalysis: React.FC = () => {
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetchAnalysisColumns()
+    fetchStatisticsColumns()
       .then(cols => {
         if (cols.length > 0) {
           setColumns(cols);

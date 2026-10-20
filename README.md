@@ -38,13 +38,13 @@ frontend/src/
 ├── pages/
 │   ├── LandingPage/            home page with "Load Dataset"
 │   ├── DataPage/               upload, dataset table, pantry
-│   ├── AnalysisPage/           descriptive statistics, distribution, correlation tabs
+│   ├── StatisticsPage/         descriptive statistics, distribution, correlation tabs
 │   └── OptimizePage/           problem cards, Problem1Form/Results, Problem2Form/Results
 ├── components/                 shared pieces: Navbar, Modal
 ├── services/                   API calls, one file per page
 │   ├── apiClient.ts            URLs + error handling shared by all calls
 │   ├── datasetApi.ts           upload, rows, pantry
-│   ├── analysisApi.ts          statistics, distribution, correlation
+│   ├── statisticsApi.ts        descriptive statistics, distribution, correlation
 │   ├── optimizationApi.ts      Problem 1 and Problem 2
 │   └── session.ts              dataset id + pantry kept in the browser
 └── types/                      TypeScript types for the API responses

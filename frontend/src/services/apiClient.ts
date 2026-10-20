@@ -1,6 +1,6 @@
 /**
  * Shared helpers for talking to the backend: building URLs and reading responses.
- * The per-page API calls live in datasetApi.ts, analysisApi.ts and optimizationApi.ts.
+ * The per-page API calls live in datasetApi.ts, statisticsApi.ts and optimizationApi.ts.
  */
 
 import { getDatasetId } from './session';

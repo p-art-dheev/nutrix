@@ -1,12 +1,12 @@
 /**
- * Analysis page: descriptive statistics, distribution and correlation.
+ * Statistics (Analysis page): descriptive statistics, distribution and correlation.
  */
 
-import type { CorrelationResult, DescriptiveStatistics, DistributionResult } from '../types/analysis';
+import type { CorrelationResult, DescriptiveStatistics, DistributionResult } from '../types/statistics';
 import { getJson } from './apiClient';
 
 /** Numeric columns that can be analysed. */
-export const fetchAnalysisColumns = async (): Promise<string[]> =>
+export const fetchStatisticsColumns = async (): Promise<string[]> =>
   (await getJson<{ columns: string[] }>('/api/data/columns')).columns;
 
 /** Count, mean, median, std dev, min, Q1, Q3, max of one column. */

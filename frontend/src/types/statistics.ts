@@ -1,4 +1,4 @@
-// Responses of the Analysis page endpoints (backend/app/analysis/)
+// Responses of the statistics endpoints (backend/app/statistics/), shown on the Analysis page
 
 export interface DescriptiveStatistics {
   count: number

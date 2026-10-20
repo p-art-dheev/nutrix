@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchAnalysisColumns, fetchDistribution } from '../../services/analysisApi';
-import type { DistributionBin, DistributionResult } from '../../types/analysis';
+import { fetchStatisticsColumns, fetchDistribution } from '../../services/statisticsApi';
+import type { DistributionBin, DistributionResult } from '../../types/statistics';
 
 export const DistributionAnalysis: React.FC = () => {
   const [columns, setColumns] = useState<string[]>([]);
@@ -14,7 +14,7 @@ export const DistributionAnalysis: React.FC = () => {
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetchAnalysisColumns()
+    fetchStatisticsColumns()
       .then(cols => {
         if (cols.length > 0) {
           setColumns(cols);
