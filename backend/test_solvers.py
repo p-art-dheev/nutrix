@@ -12,7 +12,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from app.preprocessing import drop_impossible_rows
+from app.preprocessing import clean_table, drop_impossible_rows
 from app.solvers.common import load_foods, resolve_columns, suggest_column
 from app.solvers.deficiency_coverage import solve_deficiency_coverage
 from app.solvers.high_protein import solve_high_protein
@@ -121,6 +121,21 @@ def test_impossible_rows_are_dropped():
     assert cleaned["food"].tolist() == ["Egg"]
     # No carbs column -> the check cannot run, nothing is removed
     assert drop_impossible_rows(df.drop(columns="Carbohydrates"))[1] == 0
+
+
+def test_clean_table_drops_index_columns_and_zero_rows():
+    df = pd.DataFrame({
+        "Unnamed: 0":    [0, 1, 2, 3],
+        "Unnamed: 0.1":  [0, 1, 2, 3],
+        "food":          ["Egg", "Mystery", "Tea", "Water"],
+        "Caloric Value": [155, 0, 1, 0],
+        "Protein":       [13.0, 0.0, 0.0, np.nan],
+    })
+    cleaned, counts = clean_table(df)
+    assert list(cleaned.columns) == ["food", "Caloric Value", "Protein"]
+    # Mystery (all 0) and Water (0 and missing) go; Tea has 1 kcal so it stays
+    assert list(cleaned["food"]) == ["Egg", "Tea"]
+    assert counts == {"index_columns_dropped": 2, "zero_rows_dropped": 2}
 
 
 def test_column_suggestion_prefers_total_fat():

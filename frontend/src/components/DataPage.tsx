@@ -7,6 +7,17 @@ import type { UploadData } from '../types/app';
 import type { DatasetRow } from '../types/dataset';
 import './DataPage.css';
 
+const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? 's' : ''}`;
+
+/** Short notes on what preprocessing changed, e.g. "2 index columns dropped". */
+const cleaningNotes = (data: UploadData): string[] => {
+  const notes: string[] = [];
+  if (data.index_columns_dropped) notes.push(`${plural(data.index_columns_dropped, 'index column')} dropped`);
+  if (data.zero_rows_dropped) notes.push(`${plural(data.zero_rows_dropped, 'all-zero row')} dropped`);
+  if (data.rows_removed) notes.push(`${plural(data.rows_removed, 'row')} with impossible values removed`);
+  return notes;
+};
+
 interface DataPageProps {
   uploadData: UploadData | null;
   onUploadSuccess: (data: UploadData) => void;
@@ -111,8 +122,7 @@ export const DataPage: React.FC<DataPageProps> = ({
                 <p>
                   {uploadData.food_items.toLocaleString()} items · {uploadData.columns} columns ·{' '}
                   {uploadData.files_processed} file{uploadData.files_processed !== 1 ? 's' : ''}
-                  {!!uploadData.rows_removed &&
-                    ` · ${uploadData.rows_removed} row${uploadData.rows_removed !== 1 ? 's' : ''} with impossible values removed`}
+                  {cleaningNotes(uploadData).map((note) => ` · ${note}`).join('')}
                 </p>
               </div>
             </div>
