@@ -13,7 +13,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app.preprocessing import clean_table, drop_impossible_rows
-from app.solvers.common import load_foods, resolve_columns, suggest_column
+from app.solvers.common import load_foods, nutrient_columns, resolve_columns, suggest_column
 from app.solvers.deficiency_coverage import solve_deficiency_coverage
 from app.solvers.high_protein import solve_high_protein
 
@@ -136,6 +136,13 @@ def test_clean_table_drops_index_columns_and_zero_rows():
     # Mystery (all 0) and Water (0 and missing) go; Tea has 1 kcal so it stays
     assert list(cleaned["food"]) == ["Egg", "Tea"]
     assert counts == {"index_columns_dropped": 2, "zero_rows_dropped": 2}
+
+
+def test_only_vitamins_and_minerals_are_deficiency_choices():
+    df = pd.DataFrame({"food": ["A"], "Caloric Value": [1.0], "Fat": [1.0], "Carbohydrates": [1.0],
+                       "Water": [1.0], "Nutrition Density": [1.0], "Vitamin B12": [1.0],
+                       "Iron (mg)": [1.0], "calcium_mg": [1.0], "Folate": [1.0]})
+    assert nutrient_columns(df) == ["Vitamin B12", "Iron (mg)", "calcium_mg", "Folate"]
 
 
 def test_column_suggestion_prefers_total_fat():

@@ -30,6 +30,18 @@ COLUMN_HINTS: dict[str, tuple[str, ...]] = {
 # Numeric columns that are identifiers, not nutrients.
 NON_NUTRIENT_COLUMNS = {"unnamed: 0", "id", "index"}
 
+# Micronutrients a person can be deficient in (Problem 2). A column counts as a
+# vitamin if its name starts with "vitamin" or one of the chemical names, and as a
+# mineral if its name starts with a mineral name: "Iron", "Iron (mg)", "iron_mg".
+VITAMIN_NAMES = (
+    "vitamin", "thiamin", "riboflavin", "niacin", "pantothenic", "pyridoxine", "biotin",
+    "folate", "folic acid", "cobalamin", "retinol", "ascorbic", "tocopherol", "choline",
+)
+MINERAL_NAMES = (
+    "calcium", "iron", "magnesium", "phosphorus", "potassium", "sodium", "zinc", "copper",
+    "manganese", "selenium", "iodine", "chromium", "molybdenum", "fluoride", "chloride",
+)
+
 
 # ---------------------------------------------------------------------------
 # Columns
@@ -47,6 +59,14 @@ def numeric_columns(df: pd.DataFrame) -> list[str]:
         str(col)
         for col in df.select_dtypes(include="number").columns
         if str(col).strip().lower() not in NON_NUTRIENT_COLUMNS
+    ]
+
+
+def nutrient_columns(df: pd.DataFrame) -> list[str]:
+    """Numeric columns holding a vitamin or mineral: the choices for Problem 2."""
+    return [
+        col for col in numeric_columns(df)
+        if _clean_name(col).startswith(VITAMIN_NAMES + MINERAL_NAMES)
     ]
 
 

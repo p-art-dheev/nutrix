@@ -21,6 +21,7 @@ export interface NutritionTargets {
 export interface OptimizationColumns {
   numeric_columns: string[]
   suggested: { calories: string | null; fat: string | null; protein: string | null }
+  nutrient_columns: string[]  // vitamin and mineral columns (Problem 2 choices)
 }
 
 export interface HighProteinLimits {

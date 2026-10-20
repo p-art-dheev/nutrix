@@ -14,7 +14,14 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.solvers.common import COLUMN_HINTS, load_foods, numeric_columns, resolve_columns, suggest_column
+from app.solvers.common import (
+    COLUMN_HINTS,
+    load_foods,
+    numeric_columns,
+    nutrient_columns,
+    resolve_columns,
+    suggest_column,
+)
 from app.solvers.deficiency_coverage import solve_deficiency_coverage
 from app.solvers.high_protein import solve_high_protein
 from app.storage import current_dataset
@@ -51,10 +58,11 @@ def _run(solver, df: pd.DataFrame, pantry_ids: list[int], column_mapping: dict[s
 
 @router.get("/api/optimization/columns")
 def get_columns(df: pd.DataFrame = Depends(current_dataset)):
-    """Numeric columns the user can map, plus our best guess for each role."""
+    """Numeric columns, the detected column for each role, and the vitamin/mineral columns."""
     return {
         "numeric_columns": numeric_columns(df),
         "suggested": {role: suggest_column(df, role) for role in COLUMN_HINTS},
+        "nutrient_columns": nutrient_columns(df),  # choices for the deficient nutrient (Problem 2)
     }
 
 
@@ -114,6 +122,8 @@ class DeficiencyCoverageRequest(BaseModel):
 
 @router.post("/api/optimization/deficiency-coverage")
 def run_deficiency_coverage(body: DeficiencyCoverageRequest, df: pd.DataFrame = Depends(current_dataset)):
+    if body.nutrient not in nutrient_columns(df):
+        raise HTTPException(status_code=400, detail=f"'{body.nutrient}' is not a vitamin or mineral column.")
     result = _run(
         solve_deficiency_coverage,
         df,

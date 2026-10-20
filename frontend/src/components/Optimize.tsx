@@ -151,7 +151,8 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
   const [columns, setColumns] = useState<OptimizationColumns | null>(null);
   const [columnsLoading, setColumnsLoading] = useState(false);
   const [mapping, setMapping] = useState<ColumnMapping>(EMPTY_MAPPING);
-  const numericColumns = columns?.numeric_columns ?? [];
+  // Only vitamins and minerals can be chosen as the deficient nutrient
+  const nutrientColumns = columns?.nutrient_columns ?? [];
 
   // Shared UI state
   const [formError, setFormError] = useState<string | null>(null);
@@ -170,7 +171,10 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
           fat: data.suggested.fat ?? '',
           protein: data.suggested.protein ?? '',
         });
-        setDcForm((prev) => ({ ...prev, nutrient: prev.nutrient || data.numeric_columns[0] || '' }));
+        // Default to iron (the most common deficiency) when the dataset has it
+        const defaultNutrient =
+          data.nutrient_columns.find((col) => col.toLowerCase().startsWith('iron')) ?? data.nutrient_columns[0] ?? '';
+        setDcForm((prev) => ({ ...prev, nutrient: prev.nutrient || defaultNutrient }));
       })
       .catch(() => setFormError('Could not load columns from the dataset.'))
       .finally(() => setColumnsLoading(false));
@@ -418,10 +422,10 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
                       onChange={(e) => handleDcChange('nutrient', e.target.value)}
                       className="opt-select"
                     >
-                      {numericColumns.length === 0 && (
-                        <option value="">No columns available</option>
+                      {nutrientColumns.length === 0 && (
+                        <option value="">No vitamin or mineral columns found</option>
                       )}
-                      {numericColumns.map((col) => (
+                      {nutrientColumns.map((col) => (
                         <option key={col} value={col}>
                           {col}
                         </option>
