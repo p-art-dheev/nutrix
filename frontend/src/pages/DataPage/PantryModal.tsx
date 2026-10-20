@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Modal } from './Modal';
-import { clearPantry, removeFromPantry } from '../services/dataApi';
-import type { PantryItem } from '../types/dataset';
+import { Modal } from '../../components/Modal';
+import { clearPantry, removeFromPantry } from '../../services/datasetApi';
+import type { PantryItem } from '../../types/dataset';
 import './PantryModal.css';
 
 interface PantryModalProps {

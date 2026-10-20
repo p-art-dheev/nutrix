@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import './Analysis.css'; // Reusing some base styles
-import './DistributionAnalysis.css';
-import { apiUrl } from '../services/dataApi';
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface CorrelationResult {
-  x: string;
-  y: string;
-  pearson_r: number | null;
-  pair_count: number;
-  points: Point[];
-}
+import { fetchAnalysisColumns, fetchCorrelation } from '../../services/analysisApi';
+import type { CorrelationResult } from '../../types/analysis';
 
 // Common rule of thumb for reading |r|
 const describeStrength = (r: number | null) => {
@@ -38,16 +24,12 @@ export const CorrelationAnalysis: React.FC = () => {
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetch(apiUrl('/api/data/columns'))
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch columns');
-        return res.json();
-      })
-      .then(data => {
-        if (data.columns && data.columns.length > 0) {
-          setColumns(data.columns);
-          setXColumn(data.columns[0]);
-          setYColumn(data.columns[1] ?? data.columns[0]);
+    fetchAnalysisColumns()
+      .then(cols => {
+        if (cols.length > 0) {
+          setColumns(cols);
+          setXColumn(cols[0]);
+          setYColumn(cols[1] ?? cols[0]);
         }
       })
       .catch(err => {
@@ -63,12 +45,7 @@ export const CorrelationAnalysis: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await fetch(apiUrl('/api/data/correlation', { x: xColumn, y: yColumn }));
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.detail || 'Failed to fetch correlation');
-      }
-      setResult(await response.json());
+      setResult(await fetchCorrelation(xColumn, yColumn));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while generating correlation.');
     } finally {

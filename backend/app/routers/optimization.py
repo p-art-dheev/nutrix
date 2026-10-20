@@ -1,11 +1,11 @@
 """
-HTTP layer for the optimization methods.
+HTTP layer for the optimization problems.
 
 The router only does three things:
     1. read the request: dataset (?datasetId=), column mapping, pantry row IDs
-    2. turn dataset rows into a food list (common.load_foods)
-    3. call the solver and add dataset info to its result
-All optimization logic lives in app/solvers/.
+    2. turn dataset rows into a food list (optimization.common.load_foods)
+    3. call the problem's solver and add dataset info to its result
+All optimization logic lives in app/optimization/.
 """
 
 from typing import Optional
@@ -14,16 +14,10 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.solvers.common import (
-    COLUMN_HINTS,
-    load_foods,
-    numeric_columns,
-    nutrient_columns,
-    resolve_columns,
-    suggest_column,
-)
-from app.solvers.deficiency_coverage import solve_deficiency_coverage
-from app.solvers.high_protein import solve_high_protein
+from app.columns import COLUMN_HINTS, numeric_columns, nutrient_columns, resolve_columns, suggest_column
+from app.optimization.common import load_foods
+from app.optimization.problem1_protein_diet import solve_high_protein
+from app.optimization.problem2_deficiency_coverage import solve_deficiency_coverage
 from app.storage import current_dataset
 
 router = APIRouter()

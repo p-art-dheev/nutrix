@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
-import { Analysis } from './components/Analysis';
-import { DataPage } from './components/DataPage';
-import { Optimize } from './components/Optimize';
+import { LandingPage } from './pages/LandingPage/LandingPage';
+import { AnalysisPage } from './pages/AnalysisPage/AnalysisPage';
+import { DataPage } from './pages/DataPage/DataPage';
+import { OptimizePage } from './pages/OptimizePage/OptimizePage';
 import { setDatasetId } from './services/session';
 import type { AppView, UploadData } from './types/app';
 
@@ -29,7 +29,7 @@ function App() {
       case 'landing':
         return (
           <div className="landing-page">
-            <HeroSection onLoadDatasetClick={() => handleNavigate('data')} />
+            <LandingPage onLoadDatasetClick={() => handleNavigate('data')} />
           </div>
         );
       case 'data':
@@ -43,9 +43,9 @@ function App() {
           />
         );
       case 'analysis':
-        return <Analysis hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
+        return <AnalysisPage hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
       case 'optimize':
-        return <Optimize hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
+        return <OptimizePage hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
       default:
         return null;
     }

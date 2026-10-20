@@ -1,11 +1,11 @@
 import React from 'react';
-import './HeroSection.css';
+import './LandingPage.css';
 
-interface HeroSectionProps {
+interface LandingPageProps {
   onLoadDatasetClick: () => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onLoadDatasetClick }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLoadDatasetClick }) => {
   return (
     <section className="hero-section">
       <div className="hero-left">

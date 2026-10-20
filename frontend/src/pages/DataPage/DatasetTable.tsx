@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { addBulkToPantry, addToPantry } from '../services/dataApi';
-import type { DatasetRow } from '../types/dataset';
+import { addBulkToPantry, addToPantry } from '../../services/datasetApi';
+import type { DatasetRow } from '../../types/dataset';
 import './DatasetTable.css';
 
 interface DatasetTableProps {

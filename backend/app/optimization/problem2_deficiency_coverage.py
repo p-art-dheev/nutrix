@@ -26,7 +26,7 @@ Input foods: [{"id", "name", "calories", "nutrient"}, ...]
 
 import pulp
 
-from app.solvers.common import solve, value
+from app.optimization.common import solve, value
 
 
 def big_m(calories_per_100g: float, calorie_max: float) -> float:

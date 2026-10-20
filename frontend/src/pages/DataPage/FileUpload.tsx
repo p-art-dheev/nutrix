@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import type { UploadData } from '../types/app';
-import { uploadDataset } from '../services/dataApi';
+import type { UploadData } from '../../types/app';
+import { uploadDataset } from '../../services/datasetApi';
 import './FileUpload.css';
 
 interface FileUploadProps {

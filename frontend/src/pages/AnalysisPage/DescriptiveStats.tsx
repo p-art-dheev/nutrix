@@ -1,36 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import './Analysis.css';
-import { apiUrl } from '../services/dataApi';
-
-interface Stats {
-  count: number;
-  mean: number;
-  median: number;
-  std: number;
-  min: number;
-  q1: number;
-  q3: number;
-  max: number;
-}
+import { fetchAnalysisColumns, fetchDescriptiveStats } from '../../services/analysisApi';
+import type { DescriptiveStatistics } from '../../types/analysis';
 
 export const DescriptiveStats: React.FC = () => {
   const [columns, setColumns] = useState<string[]>([]);
   const [selectedColumn, setSelectedColumn] = useState<string>('');
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<DescriptiveStatistics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetch(apiUrl('/api/data/columns'))
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch columns');
-        return res.json();
-      })
-      .then(data => {
-        if (data.columns && data.columns.length > 0) {
-          setColumns(data.columns);
-          setSelectedColumn(data.columns[0]); // Default to first column
+    fetchAnalysisColumns()
+      .then(cols => {
+        if (cols.length > 0) {
+          setColumns(cols);
+          setSelectedColumn(cols[0]); // Default to first column
         }
       })
       .catch(err => {
@@ -46,12 +31,7 @@ export const DescriptiveStats: React.FC = () => {
     setStats(null);
 
     try {
-      const response = await fetch(apiUrl(`/api/data/stats/${encodeURIComponent(selectedColumn)}`));
-      if (!response.ok) {
-        throw new Error('Failed to fetch statistics');
-      }
-      const data = await response.json();
-      setStats(data.statistics);
+      setStats(await fetchDescriptiveStats(selectedColumn));
     } catch (err: any) {
       setError(err.message || 'An error occurred while generating statistics.');
     } finally {

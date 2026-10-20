@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { DescriptiveStats } from './DescriptiveStats';
 import { DistributionAnalysis } from './DistributionAnalysis';
 import { CorrelationAnalysis } from './CorrelationAnalysis';
-import './AnalysisWrapper.css';
+import './AnalysisPage.css';
 
-interface AnalysisProps {
+interface AnalysisPageProps {
   hasData: boolean;
   onNavigateToData: () => void;
 }
 
-export const Analysis: React.FC<AnalysisProps> = ({ hasData, onNavigateToData }) => {
+export const AnalysisPage: React.FC<AnalysisPageProps> = ({ hasData, onNavigateToData }) => {
   const [activeTab, setActiveTab] = useState<'descriptive' | 'distribution' | 'correlation'>('descriptive');
 
   if (!hasData) {

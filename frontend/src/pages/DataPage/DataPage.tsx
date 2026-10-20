@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FileUpload } from './FileUpload';
 import { DatasetTable } from './DatasetTable';
 import { PantryModal } from './PantryModal';
-import { fetchDatasetRows } from '../services/dataApi';
-import type { UploadData } from '../types/app';
-import type { DatasetRow } from '../types/dataset';
+import { fetchDatasetRows } from '../../services/datasetApi';
+import type { UploadData } from '../../types/app';
+import type { DatasetRow } from '../../types/dataset';
 import './DataPage.css';
 
 const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? 's' : ''}`;

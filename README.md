@@ -12,6 +12,46 @@ The interface is built with a clean, minimalist "Linear × Notion" design aesthe
 
 ---
 
+## Project Structure
+
+```
+backend/app/
+├── main.py                     creates the API and registers the routers
+├── storage.py                  where uploaded datasets are kept (Vercel Blob / disk)
+├── columns.py                  which column holds what (calories, protein, vitamins, ...)
+├── preprocessing/              cleaning applied to every upload
+│   ├── cleaning.py             1. drop index columns   2. drop all-zero rows
+│   └── validation.py           3. drop rows with impossible values (4-4-9 kcal rule)
+├── analysis/                   statistics on the Analysis page
+│   ├── descriptive.py          count, mean, median, std dev, min, max, Q1, Q3
+│   ├── distribution.py         histogram with equal-width bins
+│   └── correlation.py          Pearson r + scatter points
+├── optimization/
+│   ├── problem1_protein_diet.py           Problem 1: Optimal Protein Diet (LP)
+│   ├── problem2_deficiency_coverage.py    Problem 2: Deficiency-Aware Food Selection (MILP)
+│   └── common.py                          load foods, solve with CBC, read values
+└── routers/                    HTTP endpoints only, no calculations
+    ├── upload.py  data.py  analysis.py  optimization.py
+
+frontend/src/
+├── App.tsx                     switches between the pages
+├── pages/
+│   ├── LandingPage/            home page with "Load Dataset"
+│   ├── DataPage/               upload, dataset table, pantry
+│   ├── AnalysisPage/           descriptive statistics, distribution, correlation tabs
+│   └── OptimizePage/           problem cards, Problem1Form/Results, Problem2Form/Results
+├── components/                 shared pieces: Navbar, Modal
+├── services/                   API calls, one file per page
+│   ├── apiClient.ts            URLs + error handling shared by all calls
+│   ├── datasetApi.ts           upload, rows, pantry
+│   ├── analysisApi.ts          statistics, distribution, correlation
+│   ├── optimizationApi.ts      Problem 1 and Problem 2
+│   └── session.ts              dataset id + pantry kept in the browser
+└── types/                      TypeScript types for the API responses
+```
+
+---
+
 ## Getting Started
 
 Clone the repository:

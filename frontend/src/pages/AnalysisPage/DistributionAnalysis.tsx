@@ -1,40 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import './Analysis.css'; // Reusing some base styles
-import './DistributionAnalysis.css';
-import { apiUrl } from '../services/dataApi';
-
-interface DistributionData {
-  range: string;
-  count: number;
-}
-
-interface DistributionStats {
-  mean: number | null;
-  median: number | null;
-  std: number | null;
-}
+import { fetchAnalysisColumns, fetchDistribution } from '../../services/analysisApi';
+import type { DistributionBin, DistributionResult } from '../../types/analysis';
 
 export const DistributionAnalysis: React.FC = () => {
   const [columns, setColumns] = useState<string[]>([]);
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [selectedBins, setSelectedBins] = useState<number>(5);
-  const [distribution, setDistribution] = useState<DistributionData[] | null>(null);
-  const [stats, setStats] = useState<DistributionStats | null>(null);
+  const [distribution, setDistribution] = useState<DistributionBin[] | null>(null);
+  const [stats, setStats] = useState<DistributionResult['statistics'] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch available columns on mount
-    fetch(apiUrl('/api/data/columns'))
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch columns');
-        return res.json();
-      })
-      .then(data => {
-        if (data.columns && data.columns.length > 0) {
-          setColumns(data.columns);
-          setSelectedColumn(data.columns[0]); // Default to first column
+    fetchAnalysisColumns()
+      .then(cols => {
+        if (cols.length > 0) {
+          setColumns(cols);
+          setSelectedColumn(cols[0]); // Default to first column
         }
       })
       .catch(err => {
@@ -51,11 +35,7 @@ export const DistributionAnalysis: React.FC = () => {
     setStats(null);
 
     try {
-      const response = await fetch(apiUrl(`/api/data/distribution/${encodeURIComponent(selectedColumn)}`, { bins: selectedBins }));
-      if (!response.ok) {
-        throw new Error('Failed to fetch distribution data');
-      }
-      const data = await response.json();
+      const data = await fetchDistribution(selectedColumn, selectedBins);
       setDistribution(data.distribution);
       setStats(data.statistics);
     } catch (err: any) {

@@ -16,7 +16,7 @@ Input foods: [{"id", "name", "calories", "fat", "protein"}, ...]
 
 import pulp
 
-from app.solvers.common import solve, value
+from app.optimization.common import solve, value
 
 MIN_REPORTED_GRAMS = 0.05  # hide foods the solver gave (almost) nothing
 

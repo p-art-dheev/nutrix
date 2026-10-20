@@ -1,3 +1,14 @@
+"""
+Nutrix API.
+
+    routers/        HTTP endpoints only (upload, data, analysis, optimization)
+    preprocessing/  cleaning applied to every upload
+    analysis/       descriptive statistics, distribution, correlation
+    optimization/   Problem 1 (LP) and Problem 2 (MILP)
+    columns.py      which dataset column holds what
+    storage.py      where uploaded datasets are kept
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import upload, analysis, data, optimization

@@ -1,25 +1,16 @@
 """
-Shared helpers for every optimization method.
+Column detection: which dataset column holds what.
 
-Every solver follows the same three steps:
-    1. prepare foods   -> load_foods() turns dataset rows into plain dicts
-    2. build the model -> done inside each solver file (PuLP)
-    3. read the result -> solve() returns the solver status
-
-Solvers only receive plain Python data (a list of food dicts), never the
-DataFrame, so a new method can be added without touching the data layer.
+Detection is by column name only, so any dataset with recognizable names works.
+Used by preprocessing, statistical analysis and both optimization problems.
 """
 
 import re
-from typing import Iterable, Optional
+from typing import Optional
 
 import pandas as pd
-import pulp
-
-from app.data_utils import get_food_column
 
 # Names we try (in order) to detect which column holds each value.
-# Detection is by column name only, so any dataset with recognizable names works.
 COLUMN_HINTS: dict[str, tuple[str, ...]] = {
     "calories": ("caloric value", "calories", "calorie", "energy", "kcal"),
     "fat": ("total fat", "fat"),
@@ -43,14 +34,21 @@ MINERAL_NAMES = (
 )
 
 
-# ---------------------------------------------------------------------------
-# Columns
-# ---------------------------------------------------------------------------
-
 def _clean_name(column: str) -> str:
     """'Total Fat (g)' -> 'total fat'   |   'protein_g' -> 'protein g'"""
     name = re.sub(r"\(.*?\)|\[.*?\]", "", str(column))
     return name.replace("_", " ").strip().lower()
+
+
+def get_food_column(df: pd.DataFrame) -> str:
+    """The column holding food names: 'food', 'name', ... or the first text column."""
+    for name in ("food", "Food", "name", "Name", "food_name", "Food Name"):
+        if name in df.columns:
+            return name
+    for col in df.columns:
+        if df[col].dtype == "object":
+            return col
+    return str(df.columns[0])
 
 
 def numeric_columns(df: pd.DataFrame) -> list[str]:
@@ -93,7 +91,7 @@ def suggest_column(df: pd.DataFrame, role: str) -> Optional[str]:
 
 def resolve_columns(df: pd.DataFrame, mapping: dict[str, Optional[str]]) -> dict[str, str]:
     """
-    Turn the user's column mapping into validated column names.
+    Turn a column mapping into validated column names.
     `mapping` looks like {"calories": "Caloric Value", "fat": None, ...};
     a None value falls back to suggest_column().
     """
@@ -109,60 +107,3 @@ def resolve_columns(df: pd.DataFrame, mapping: dict[str, Optional[str]]) -> dict
             raise ValueError(f"Column '{column}' (mapped to {role}) is not numeric.")
         resolved[role] = column
     return resolved
-
-
-# ---------------------------------------------------------------------------
-# Foods
-# ---------------------------------------------------------------------------
-
-def load_foods(
-    df: pd.DataFrame, row_ids: Iterable[int], columns: dict[str, str]
-) -> tuple[list[dict], int]:
-    """
-    Build the food list a solver needs.
-
-    Returns (foods, skipped_count). Each food looks like:
-        {"id": 12, "name": "Lentils", "calories": 116.0, "protein": 9.0, ...}
-    with one key per role in `columns` (values are per 100 g).
-
-    Rows with a missing, non-numeric or negative value in any required column
-    are skipped. Treating them as 0 would be wrong: a food with unknown
-    calories would look calorie-free and the solver would pick it without limit.
-    """
-    food_column = get_food_column(df)
-    foods: list[dict] = []
-    skipped = 0
-
-    for row_id in row_ids:
-        if not 0 <= row_id < len(df):
-            continue
-        row = df.iloc[row_id]
-        values = {role: pd.to_numeric(row[col], errors="coerce") for role, col in columns.items()}
-
-        if any(pd.isna(v) or v < 0 for v in values.values()):
-            skipped += 1
-            continue
-
-        name = row[food_column]
-        foods.append({
-            "id": int(row_id),
-            "name": str(name) if pd.notna(name) else f"Food {row_id}",
-            **{role: float(v) for role, v in values.items()},
-        })
-
-    return foods, skipped
-
-
-# ---------------------------------------------------------------------------
-# Solving
-# ---------------------------------------------------------------------------
-
-def solve(model: pulp.LpProblem) -> str:
-    """Solve with the bundled CBC solver and return 'Optimal', 'Infeasible', ..."""
-    model.solve(pulp.PULP_CBC_CMD(msg=False))
-    return pulp.LpStatus[model.status]
-
-
-def value(expression) -> float:
-    """Numeric value of a PuLP variable/expression after solving (None -> 0)."""
-    return float(pulp.value(expression) or 0.0)

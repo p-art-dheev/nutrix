@@ -1,143 +1,56 @@
-from fastapi import APIRouter, Depends, HTTPException
-import pandas as pd
-import numpy as np
-import math
+"""
+HTTP layer for the statistical analysis (Analysis page).
+The calculations live in app/analysis/.
+"""
 
+import pandas as pd
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.analysis.correlation import pearson
+from app.analysis.descriptive import describe
+from app.analysis.distribution import histogram
+from app.columns import numeric_columns
 from app.storage import current_dataset
 
 router = APIRouter()
 
+
+def _numeric_column(df: pd.DataFrame, name: str) -> pd.Series:
+    """The column `name`, or a 404/400 error if it is missing or not numeric."""
+    if name not in df.columns:
+        raise HTTPException(status_code=404, detail=f"Column '{name}' not found.")
+    if not pd.api.types.is_numeric_dtype(df[name]):
+        raise HTTPException(status_code=400, detail=f"Column '{name}' is not numeric.")
+    return df[name]
+
+
 @router.get("/api/data/columns")
 def get_columns(df: pd.DataFrame = Depends(current_dataset)):
-    """
-    Returns a list of numerical columns available for descriptive statistics.
-    """
-    
-    # Filter for numeric columns only, and exclude generic ones like 'Unnamed: 0' if possible
-    numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
-    # Optional: exclude common index/id columns if they exist
-    numeric_cols = [c for c in numeric_cols if c not in ['Unnamed: 0', 'id', 'ID']]
-    
-    return {"columns": numeric_cols}
+    """Numeric columns that can be analysed."""
+    return {"columns": numeric_columns(df)}
+
 
 @router.get("/api/data/stats/{column_name}")
 def get_stats(column_name: str, df: pd.DataFrame = Depends(current_dataset)):
-    """
-    Returns descriptive statistics for a specific column.
-    """
-        
-    if column_name not in df.columns:
-        raise HTTPException(status_code=404, detail=f"Column '{column_name}' not found.")
-        
-    # Check if the column is numeric
-    if not pd.api.types.is_numeric_dtype(df[column_name]):
-        raise HTTPException(status_code=400, detail=f"Column '{column_name}' is not numeric.")
-        
-    series = df[column_name].dropna() # Drop NaNs for accurate stats
-    
-    stats = {
-        "count": int(series.count()),
-        "mean": float(series.mean()),
-        "median": float(series.median()),
-        "std": float(series.std()),
-        "min": float(series.min()),
-        "q1": float(series.quantile(0.25)),
-        "q3": float(series.quantile(0.75)),
-        "max": float(series.max())
-    }
-    
-    # Handle NaN values resulting from operations on empty/invalid series
-    for k, v in stats.items():
-        if math.isnan(v) or math.isinf(v):
-            stats[k] = None
-            
-    return {"attribute": column_name, "statistics": stats}
+    """Descriptive statistics of one column."""
+    return {"attribute": column_name, "statistics": describe(_numeric_column(df, column_name))}
+
 
 @router.get("/api/data/distribution/{column_name}")
 def get_distribution(column_name: str, bins: int = 5, df: pd.DataFrame = Depends(current_dataset)):
-    """
-    Returns histogram data and basic stats for a specific column's distribution.
-    """
-        
-    if column_name not in df.columns:
-        raise HTTPException(status_code=404, detail=f"Column '{column_name}' not found.")
-        
-    # Check if the column is numeric
-    if not pd.api.types.is_numeric_dtype(df[column_name]):
-        raise HTTPException(status_code=400, detail=f"Column '{column_name}' is not numeric.")
-        
-    series = df[column_name].dropna() # Drop NaNs
-    
-    if series.empty:
-        raise HTTPException(status_code=400, detail="Column contains no valid data.")
+    """Histogram of one column with `bins` equal-width bins."""
+    series = _numeric_column(df, column_name)
+    try:
+        return {"attribute": column_name, **histogram(series, bins)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # Calculate statistics
-    mean_val = float(series.mean())
-    median_val = float(series.median())
-    std_val = float(series.std())
-
-    # Calculate histogram
-    counts, bin_edges = np.histogram(series, bins=bins)
-    
-    # Format for frontend charting library
-    distribution_data = []
-    for i in range(len(counts)):
-        lower = float(bin_edges[i])
-        upper = float(bin_edges[i+1])
-        
-        # Round intelligently based on magnitude
-        if upper > 1000:
-            range_label = f"{int(lower)} - {int(upper)}"
-        elif upper > 10:
-            range_label = f"{lower:.1f} - {upper:.1f}"
-        else:
-            range_label = f"{lower:.2f} - {upper:.2f}"
-            
-        distribution_data.append({
-            "range": range_label,
-            "count": int(counts[i])
-        })
-        
-    return {
-        "attribute": column_name,
-        "statistics": {
-            "mean": mean_val if not math.isnan(mean_val) else None,
-            "median": median_val if not math.isnan(median_val) else None,
-            "std": std_val if not math.isnan(std_val) else None
-        },
-        "distribution": distribution_data
-    }
 
 @router.get("/api/data/correlation")
 def get_correlation(x: str, y: str, df: pd.DataFrame = Depends(current_dataset)):
-    """
-    Returns the Pearson correlation between two numeric columns, plus the
-    points for a scatter plot.
-    """
-
-    for column_name in (x, y):
-        if column_name not in df.columns:
-            raise HTTPException(status_code=404, detail=f"Column '{column_name}' not found.")
-        if not pd.api.types.is_numeric_dtype(df[column_name]):
-            raise HTTPException(status_code=400, detail=f"Column '{column_name}' is not numeric.")
-
-    # Only rows where both values are present
-    pairs = pd.DataFrame({"x": df[x], "y": df[y]}).dropna()
-
-    if len(pairs) < 2:
-        raise HTTPException(status_code=400, detail="Need at least two rows with values in both columns.")
-
-    r = float(pairs["x"].corr(pairs["y"]))
-    if math.isnan(r):
-        r = None  # one column is constant, so correlation is undefined
-
-    # Keep the chart fast on large datasets
-    sample = pairs.sample(n=2000, random_state=0) if len(pairs) > 2000 else pairs
-
-    return {
-        "x": x,
-        "y": y,
-        "pearson_r": r,
-        "pair_count": int(len(pairs)),
-        "points": [{"x": float(px), "y": float(py)} for px, py in zip(sample["x"], sample["y"])],
-    }
+    """Pearson correlation between two columns, plus scatter points."""
+    x_values, y_values = _numeric_column(df, x), _numeric_column(df, y)
+    try:
+        return {"x": x, "y": y, **pearson(x_values, y_values)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
