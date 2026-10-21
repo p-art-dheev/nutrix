@@ -15,6 +15,8 @@ const cleaningNotes = (data: UploadData): string[] => {
   if (data.index_columns_dropped) notes.push(`${plural(data.index_columns_dropped, 'index column')} dropped`);
   if (data.zero_rows_dropped) notes.push(`${plural(data.zero_rows_dropped, 'all-zero row')} dropped`);
   if (data.rows_removed) notes.push(`${plural(data.rows_removed, 'row')} with impossible values removed`);
+  if (data.not_per_100g_rows_dropped)
+    notes.push(`${plural(data.not_per_100g_rows_dropped, 'row')} not per 100 g removed`);
   return notes;
 };
 
